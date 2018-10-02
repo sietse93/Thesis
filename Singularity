@@ -47,6 +47,8 @@ From: osrf/ros:kinetic-desktop
     update-alternatives --install /usr/bin/clang++ clang++ /usr/lib/llvm-5.0/bin/clang++ 101
     update-alternatives --install /usr/bin/clang clang /usr/lib/llvm-5.0/bin/clang 101
 
+    sudo -H apt-get install ros-kinetic-ackermann-msgs
+
     echo "removing cmake"
     apt remove -y cmake
     echo "purge cmake"
