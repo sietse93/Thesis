@@ -7,7 +7,7 @@ import argparse
 import logging
 import time
 
-from carla.client import make_carla_client #Context manager
+from ..PythonClient.carla.client import make_carla_client #Context manager
 from carla.sensor import Camera
 from carla.settings import CarlaSettings
 from carla.tcp import TCPConnectionError
@@ -39,15 +39,8 @@ def run_carla_client():
 
         for frame in range(0, 10000): # note these are the amount of frames that you play
             measurements, sensor_data = client.read_data() # Important otherwise it just shuts off
-            #control = measurements.player_measurements.autopilot_control
-            client.send_control(
-                steer=0,
-                throttle=0.5,
-                brake=0.0,
-                hand_brake=False,
-                reverse=False)
-
-            #client.send_control(control)
+            control = measurements.player_measurements.autopilot_control
+            client.send_control(control)
 
 def main():
 
