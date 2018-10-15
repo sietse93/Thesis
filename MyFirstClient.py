@@ -14,6 +14,8 @@ from carla.tcp import TCPConnectionError
 
 host = 'localhost'
 port = 2000
+out_filename_format = '_out/{:s}/{:0>6d}' #add string and 6 digit number
+
 def run_carla_client():
     with make_carla_client(host, port) as client: #make_carla_client(localhost, port)
         print('CarlaClient connected')
@@ -31,16 +33,28 @@ def run_carla_client():
 
         Camera0 = Camera('CameraRGB')
         Camera0.set_image_size(800, 600)
-        Camera0.set_position(0.30,0,1.30)
+        Camera0.set_position(2.0, 0.0, 1.4)
+        Camera0.set_rotation(0.0, 0.0, 0.0)
         settings.add_sensor(Camera0)
         print('loading settings')
         scene = client.load_settings(settings)
         client.start_episode(15) #location of start position vehicle
+        with open("player_location.txt", "w+") as player_log:
+            somestring = '{: f}      {: f}        {: f}\n'
+            for frame in range(0, 3600): # note these are the amount of frames that you play
+                measurements, sensor_data = client.read_data() # Important otherwise it just shuts off
+                newstring = somestring.format(measurements.player_measurements.transform.location.x,
+                                  measurements.player_measurements.transform.location.y,
+                                  measurements.player_measurements.transform.location.z)
+                #player_log.write(str(measurements.player_measurements.transform.location.x) + '\n')
+                player_log.write(newstring)
+                for name, measurement in sensor_data.items():
+                    filename= out_filename_format.format(name, frame)
+                    measurement.save_to_disk(filename)
 
-        for frame in range(0, 3600): # note these are the amount of frames that you play
-            measurements, sensor_data = client.read_data() # Important otherwise it just shuts off
-            control = measurements.player_measurements.autopilot_control
-            client.send_control(control)
+                control = measurements.player_measurements.autopilot_control
+
+                client.send_control(control)
 
 def main():
 
@@ -48,6 +62,7 @@ def main():
     logging.basicConfig(format='%(levelname)s: %(message)s', level=log_level)
 
     logging.info('listening to server %s:%s', host, port)
+
 
 
 
