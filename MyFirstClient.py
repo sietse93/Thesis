@@ -26,9 +26,11 @@ def run_carla_client():
             QualityLevel = 'Low',
             PlayerVehicle = None,
             NumberOfVehicles = 5,
-            NumberOfPedestrians =0,
+            NumberOfPedestrians =3,
             WeatherId =1,
-            DisableTwoWheeledVehicles = True
+            DisableTwoWheeledVehicles = True,
+            SeedVehicles = 123456789,
+            SeedPedestrians = 123456789
         )
 
         Camera0 = Camera('CameraRGB')
@@ -42,6 +44,7 @@ def run_carla_client():
 
         player_log = open("player_location.txt","w")
         vehicle_log = open("vehicle_locations.txt", "w")
+        pedestrian_log= open("pedestrian_locations.txt","w")
 
         for frame in range(0, 3600): # note these are the amount of frames that you play
             measurements, sensor_data = client.read_data() # Important otherwise it just shuts off
@@ -52,15 +55,22 @@ def run_carla_client():
                         measurements.player_measurements.transform.location.z)
             player_log.write(playerstring)
 
-            vehiclesstringtemp = '{: d}     {: d}     {:6.2f}       {:6.2f}     {:6.2f}\n'
+            agentstringtemp = '{: d}     {: d}     {:6.2f}       {:6.2f}     {:6.2f}\n'
             for agent in measurements.non_player_agents:
                 if agent.HasField('vehicle'):
-                    vehiclestring=vehiclesstringtemp.format(measurements.frame_number,
+                    vehiclestring=agentstringtemp.format(measurements.frame_number,
                                                             agent.id,
                                                             agent.vehicle.transform.location.x,
                                                             agent.vehicle.transform.location.y,
                                                             agent.vehicle.transform.location.z)
                     vehicle_log.write(vehiclestring)
+                elif agent.HasField('pedestrian'):
+                    pedestrianstring=agentstringtemp.format(measurements.frame_number,
+                                                            agent.id,
+                                                            agent.vehicle.transform.location.x,
+                                                            agent.vehicle.transform.location.y,
+                                                            agent.vehicle.transform.location.z)
+                    pedestrian_log.write(pedestrianstring)
             for name, measurement in sensor_data.items():
                 filename= out_filename_format.format(name, frame)
                 measurement.save_to_disk(filename)
@@ -70,6 +80,7 @@ def run_carla_client():
             client.send_control(control)
         player_log.close()
         vehicle_log.close()
+        pedestrian_log.close()
 
 def main():
 
