@@ -42,6 +42,8 @@ def run_carla_client():
         scene = client.load_settings(settings)
         client.start_episode(15) #location of start position vehicle
 
+        #Export a log file of location of all agents
+
         player_log = open("player_location.txt","w")
         vehicle_log = open("vehicle_locations.txt", "w")
         pedestrian_log= open("pedestrian_locations.txt","w")
@@ -71,6 +73,7 @@ def run_carla_client():
                                                             agent.vehicle.transform.location.y,
                                                             agent.vehicle.transform.location.z)
                     pedestrian_log.write(pedestrianstring)
+            # export data from sensors
             for name, measurement in sensor_data.items():
                 filename= out_filename_format.format(name, frame)
                 measurement.save_to_disk(filename)
