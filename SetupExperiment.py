@@ -1,5 +1,5 @@
 from __future__ import print_function
-from manual_control import CarlaGame, Timer
+from manual_control import CarlaGame
 
 import argparse
 import logging
@@ -35,6 +35,28 @@ from carla.planner.map import CarlaMap
 from carla.settings import CarlaSettings
 from carla.tcp import TCPConnectionError
 from carla.util import print_over_same_line
+
+def make_carla_settings(args):
+    """Make a CarlaSettings object with the settings we need."""
+    settings = CarlaSettings()
+    settings.set(
+        SynchronousMode=True,
+        SendNonPlayerAgentsInfo=True,
+        NumberOfVehicles=15,
+        NumberOfPedestrians=30,
+        WeatherId=1,
+        QualityLevel='Low',
+        DisableTwoWheeledVehicles = True,
+        SeedVehicles = 123456789,
+        SeedPedestrians = 123456789
+    )
+
+    Camera0 = Camera('CameraRGB')
+    Camera0.set_image_size(800, 600)
+    Camera0.set_position(2.0, 0.0, 1.4)
+    Camera0.set_rotation(0.0, 0.0, 0.0)
+    settings.add_sensor(Camera0)
+    return settings
 
 def main():
     argparser = argparse.ArgumentParser(
