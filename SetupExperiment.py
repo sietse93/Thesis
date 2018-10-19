@@ -76,8 +76,8 @@ def make_carla_settings(args):
     settings.set(
         SynchronousMode=True,
         SendNonPlayerAgentsInfo=True,
-        NumberOfVehicles=15,
-        NumberOfPedestrians=30,
+        NumberOfVehicles=5,
+        NumberOfPedestrians=0,
         WeatherId=1,
         QualityLevel='Low',
         DisableTwoWheeledVehicles = True,
@@ -125,7 +125,6 @@ class CarlaGame(object):
         self._lidar_measurement = None
         self._map_view = None
         self._is_on_reverse = False
-        self._display_map = args.map
         self._city_name = None
         self._map = None
         self._map_shape = None
@@ -168,8 +167,7 @@ class CarlaGame(object):
 
     def _on_new_episode(self):
         scene = self.client.load_settings(self._carla_settings)
-        if self._display_map:
-            self._city_name = scene.map_name
+        self._city_name = scene.map_name
         player_start = 15
         print('Starting new episode...')
         self.client.start_episode(player_start)
@@ -347,7 +345,7 @@ class CarlaGame(object):
 
                     pygame.draw.circle(surface, [255, 0, 255, 255], (w_pos, h_pos), 4, 0)
 
-            self._display.blit(surface, (WINDOW_WIDTH, 0))
+                self._display.blit(surface, (WINDOW_WIDTH, 0))
 
         pygame.display.flip()
 
@@ -385,10 +383,6 @@ def main():
         type=lambda s: s.title(),
         default='Epic',
         help='graphics quality level, a lower level makes the simulation run considerably faster')
-    argparser.add_argument(
-        '-m', '--map',
-        action='store_true',
-        help='plot the map of the current city')
     args = argparser.parse_args()
 
     log_level = logging.DEBUG if args.debug else logging.INFO
