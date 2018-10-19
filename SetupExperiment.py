@@ -77,7 +77,7 @@ def make_carla_settings(args):
         SynchronousMode=True,
         SendNonPlayerAgentsInfo=True,
         NumberOfVehicles=5,
-        NumberOfPedestrians=0,
+        NumberOfPedestrians=5,
         WeatherId=1,
         QualityLevel='Low',
         DisableTwoWheeledVehicles = True,
@@ -344,6 +344,17 @@ class CarlaGame(object):
                     h_pos = int(agent_position[1] *(new_window_width/float(self._map_shape[1])))
 
                     pygame.draw.circle(surface, [255, 0, 255, 255], (w_pos, h_pos), 4, 0)
+
+                if agent.HasField('pedestrian'):
+                    agent_position = self._map.convert_to_pixel([
+                        agent.pedestrian.transform.location.x,
+                        agent.pedestrian.transform.location.y,
+                        agent.pedestrian.transform.location.z])
+
+                    w_pos = int(agent_position[0]*(float(WINDOW_HEIGHT)/float(self._map_shape[0])))
+                    h_pos = int(agent_position[1] *(new_window_width/float(self._map_shape[1])))
+
+                    pygame.draw.circle(surface, [0, 0, 0, 0], (w_pos, h_pos), 4, 0)
 
                 self._display.blit(surface, (WINDOW_WIDTH, 0))
 
