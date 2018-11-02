@@ -37,6 +37,7 @@ def run_carla_client():
         Camera0.set_image_size(800, 600)
         Camera0.set_position(2.0, 0.0, 1.4)
         Camera0.set_rotation(0.0, 0.0, 0.0)
+        Camera0.set_FOV=90
         settings.add_sensor(Camera0)
         print('loading settings')
         scene = client.load_settings(settings)
@@ -47,14 +48,21 @@ def run_carla_client():
         player_log = open("player_location.txt","w")
         vehicle_log = open("vehicle_locations.txt", "w")
         pedestrian_log= open("pedestrian_locations.txt","w")
+        timestamp_log= open("experiment_time","w")
 
         for frame in range(0, 3600): # note these are the amount of frames that you play
             measurements, sensor_data = client.read_data() # Important otherwise it just shuts off
-            playerstringtemp = '{: d}   {:6.2f}      {:6.2f}        {:6.2f}\n'
-            playerstring = playerstringtemp.format( measurements.frame_number,
-                        measurements.player_measurements.transform.location.x,
-                        measurements.player_measurements.transform.location.y,
-                        measurements.player_measurements.transform.location.z)
+            player_location = measurements.player_measurements.transform.location
+            player_rotation = measurements.player_measurements.transform.rotation
+            playerstringtemp = '{: d}   {:6.2f}      {:6.2f}        {:6.2f}   {:6.2f}      {:6.2f}        {:6.2f}\n'
+            playerstring = playerstringtemp.format(measurements.frame_number,
+                        player_location.x,
+                        player_location.y,
+                        player_location.z,
+                        player_rotation.pitch,
+                        player_rotation.yaw,
+                        player_rotation.roll
+                        )
             player_log.write(playerstring)
 
             agentstringtemp = '{: d}     {: d}     {:6.2f}       {:6.2f}     {:6.2f}\n'
@@ -79,11 +87,14 @@ def run_carla_client():
                 measurement.save_to_disk(filename)
 
             control = measurements.player_measurements.autopilot_control
-
+            timestringtemp= '{: d}\n'
+            timestring= timestringtemp.format(measurements.game_timestamp)
+            timestamp_log.write(timestring)
             client.send_control(control)
         player_log.close()
         vehicle_log.close()
         pedestrian_log.close()
+        timestamp_log.close()
 
 def main():
 
