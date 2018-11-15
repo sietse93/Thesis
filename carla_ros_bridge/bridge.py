@@ -139,9 +139,26 @@ class CarlaRosBridge(object):
         number_of_player_starts = len(scene.player_start_spots)
         player_start = random.randint(0, max(0, number_of_player_starts - 1))
 
+        player_log = open("player_location","w")
+        player_txt_layout = '{: d}  {:6.2f}     {:6.2f}     {:6.2f}     {:6.2f}     {:6.2f}     {:6.2f}\n'
+
         self.client.start_episode(player_start)
         while not (rospy.is_shutdown()):
             measurements, sensor_data = self.client.read_data()
+
+            # logs groundtruth
+            player_location = measurements.player_measurements.transform.location
+            player_rotation = measurements.player_measurements.transform.rotation
+
+            player_txt_log=player_txt_layout.format(measurements.frame_number,
+                                                    player_location.x,
+                                                    player_location.y,
+                                                    player_location.z,
+                                                    player_rotation.pitch,
+                                                    player_rotation.yaw,
+                                                    player_rotation.roll
+                                                    )
+            player_log.write(player_txt_log)
 
             # handle time
             self.carla_game_stamp = measurements.game_timestamp
@@ -168,6 +185,9 @@ class CarlaRosBridge(object):
             else:
                 control = self.input_controller.cur_control
                 self.client.send_control(**control)
+
+        player_log.close()
+
 
     def __enter__(self):
         return self
