@@ -139,7 +139,7 @@ class CarlaRosBridge(object):
         number_of_player_starts = len(scene.player_start_spots)
         player_start = random.randint(0, max(0, number_of_player_starts - 1))
 
-        player_log = open("player_location","w")
+        player_log = open("player_location.txt", "w")
         player_txt_layout = '{: d}  {:6.2f}     {:6.2f}     {:6.2f}     {:6.2f}     {:6.2f}     {:6.2f}\n'
 
         self.client.start_episode(player_start)
