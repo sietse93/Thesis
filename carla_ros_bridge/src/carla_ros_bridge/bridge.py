@@ -52,6 +52,11 @@ class CarlaRosBridge(object):
         # creating input controller listener
         self.input_controller = InputController()
 
+        # create handler for logging
+        self.agent_logger_string = "/home/sietse/player_location.txt"
+        self.agent_logger_layout = '{: d}  {:6.2f}     {:6.2f}     {:6.2f}     {:6.2f}     {:6.2f}     {:6.2f}\n'
+        self.agent_logger = []
+
     def setup_carla_client(self, client, params):
         self.client = client
         self.param_sensors = params.get('sensors', {})
@@ -88,6 +93,8 @@ class CarlaRosBridge(object):
 
     def on_shutdown(self):
         rospy.loginfo("Shutdown requested")
+        self.agent_logger.close()
+        print("file is closed")
 
     def process_msg(self, topic=None, msg=None):
         """
@@ -126,7 +133,7 @@ class CarlaRosBridge(object):
     def compute_cur_time_msg(self):
         self.process_msg('clock', Clock(self.cur_time))
 
-#this is where it starts
+    # this is where it starts
     def run(self):
 
         # first publisher: clock probably a std publisher
@@ -139,9 +146,8 @@ class CarlaRosBridge(object):
         number_of_player_starts = len(scene.player_start_spots)
         player_start = random.randint(0, max(0, number_of_player_starts - 1))
 
-        player_log = open("player_location.txt", "w")
-        player_txt_layout = '{: d}  {:6.2f}     {:6.2f}     {:6.2f}     {:6.2f}     {:6.2f}     {:6.2f}\n'
-
+        self.agent_logger = open(self.agent_logger_string, "w")
+        print(' opened: ' + self.agent_logger_string)
         self.client.start_episode(player_start)
         while not (rospy.is_shutdown()):
             measurements, sensor_data = self.client.read_data()
@@ -150,7 +156,7 @@ class CarlaRosBridge(object):
             player_location = measurements.player_measurements.transform.location
             player_rotation = measurements.player_measurements.transform.rotation
 
-            player_txt_log=player_txt_layout.format(measurements.frame_number,
+            player_log_line = self.agent_logger_layout.format(measurements.frame_number,
                                                     player_location.x,
                                                     player_location.y,
                                                     player_location.z,
@@ -158,7 +164,8 @@ class CarlaRosBridge(object):
                                                     player_rotation.yaw,
                                                     player_rotation.roll
                                                     )
-            player_log.write(player_txt_log)
+            self.agent_logger.write(player_log_line)
+            print(" logged agents location txt")
 
             # handle time
             self.carla_game_stamp = measurements.game_timestamp
@@ -186,7 +193,6 @@ class CarlaRosBridge(object):
                 control = self.input_controller.cur_control
                 self.client.send_control(**control)
 
-        player_log.close()
 
 
     def __enter__(self):
