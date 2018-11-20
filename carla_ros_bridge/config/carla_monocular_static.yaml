@@ -13,7 +13,7 @@ carla:
       SensorType: CAMERA
       carla_settings:
         PostProcessing: SceneFinal
-        ImageSizeX: 800
+        ImageSizeX: 600
         ImageSizeY: 600
         FOV: 90
         PositionX: 1.80

@@ -9,11 +9,11 @@ carla:
   WeatherId: 1
 
   sensors:
-    camera/left:
+    camera_left:
       SensorType: CAMERA
       carla_settings:
         PostProcessing: SceneFinal
-        ImageSizeX: 800
+        ImageSizeX: 600
         ImageSizeY: 600
         FOV: 90
         PositionX: 1.80
@@ -23,11 +23,11 @@ carla:
         RotationRoll: 0
         RotationYaw: 0
 
-    camera/right:
+    camera_right:
       SensorType: CAMERA
       carla_settings:
         PostProcessing: SceneFinal
-        ImageSizeX: 800
+        ImageSizeX: 600
         ImageSizeY: 600
         FOV: 90
         PositionX: 1.80
