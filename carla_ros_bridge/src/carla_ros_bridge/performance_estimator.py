@@ -30,6 +30,10 @@ for log_line in gt_file:
     Q_gt.append(Q)
 gt_file.close()
 
+x_gt = np.asarray(x_gt) - x_gt[0]
+y_gt = np.asarray(y_gt) - y_gt[0]
+z_gt = np.asarray(z_gt) - z_gt[0]
+
 
 orb_file = open("/home/sietse/carla_experiment_data/stereo_static_short_orb.txt", "r")
 
@@ -63,6 +67,10 @@ for log_line in orb_file:
     Q_orb.append(Q)
 
 orb_file.close()
+
+x_orb = np.asarray(x_orb)
+y_orb = np.asarray(y_orb)
+z_orb = np.asarray(z_orb)
 
 # Walk through all the orb timestamps, calculate relative pose change
 # start from 2 seconds onward, algorithm not stable before
