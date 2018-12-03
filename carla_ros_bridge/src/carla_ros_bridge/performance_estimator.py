@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+    #!/usr/bin/env python
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -22,7 +22,6 @@ for log_line in gt_file:
     x = float(temp[1])
     y = float(temp[2])
     z = float(temp[3])
-    print(temp[4:-1])
     quaternions = np.array(temp[4:-1])
     roll_gt_temp, pitch_gt_temp, yaw_gt_temp = tf.transformations.euler_from_quaternion(quaternions)
     roll_gt.append(roll_gt_temp)
@@ -176,9 +175,10 @@ for time in time_stamp_orb:
             trans_gt.append(math.sqrt(Q_DiffGt[0][3] ** 2 + Q_DiffGt[1][3] ** 2))
         except ValueError:
             pass
-            # find the next value that is closest to the one second mark
-            # data is linearly interpolated
 
+            # # find the next value that is closest to the one second mark
+            # # data is linearly interpolated
+            #
             # temp_index = time_stamp_orb.index(time)
             # while time_stamp_orb[temp_index] < time+1:
             #     temp_index = temp_index+1
@@ -195,7 +195,7 @@ for time in time_stamp_orb:
         # y_diff_orb.append(Q_DiffOrb[1][3])
         # z_diff_orb.append(Q_DiffOrb[2][3])
         # trans_orb.append(math.sqrt(Q_DiffOrb[0][3]**2+Q_DiffOrb[1][3]**2))
-
+        #
         # # Get the equivalent ground truth index
         # gt_index = time_stamp_gt.index(time)
         # Q1_gt = Q_gt[gt_index]
@@ -204,11 +204,11 @@ for time in time_stamp_orb:
         # Q1_gt_inv = np.linalg.inv(Q1_gt)
         # Q_DiffGt = Q1_gt_inv.dot(Q2_gt)
         # Q_diff_gt.append(Q_DiffGt)
-        #
-        # x_diff_gt.append(Q_DiffGt[0][3])
-        # y_diff_gt.append(Q_DiffGt[1][3])
-        # z_diff_gt.append(Q_DiffGt[2][3])
-        # trans_gt.append(math.sqrt(Q_DiffGt[0][3]**2 + Q_DiffGt[1][3]**2))
+        # #
+        # # x_diff_gt.append(Q_DiffGt[0][3])
+        # # y_diff_gt.append(Q_DiffGt[1][3])
+        # # z_diff_gt.append(Q_DiffGt[2][3])
+        # # trans_gt.append(math.sqrt(Q_DiffGt[0][3]**2 + Q_DiffGt[1][3]**2))
 
 # # data analysis
 x_minus = np.asarray(x_gt_used) - np.asarray(x_orb_used)
