@@ -201,6 +201,7 @@ def evaluate_PSE(gt=CarlaSlamEvaluate, Slam=CarlaSlamEvaluate, time_step=float):
             gt.timeQ1Q2.append(time)
             Q1Q2_gt_i_inv = np.linalg.inv(Q1Q2_gt_i)
             RPE_i = Q1Q2_gt_i_inv.dot(Q1Q2_i)
+            print(RPE_i)
             RPE.append(RPE_i)
 
     RPEx = [matrix[0][3] for matrix in RPE]

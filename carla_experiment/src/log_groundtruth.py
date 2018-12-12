@@ -13,8 +13,11 @@ class CarlaGtLogger(object):
         self.gt_logger = {}
 
     def callback(self, data):
+        # data.transforms contain information of all agents
         index = 0
         time = data.transforms[index].header.stamp
+
+        # Convert time from integer to float. Needed to match timestamp with ORB
         game_stamp = time.to_sec()
         translation = data.transforms[index].transform.translation
         rotation = data.transforms[index].transform.rotation
