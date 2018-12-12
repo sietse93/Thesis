@@ -32,10 +32,20 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
         self.log_control_brake = []
 
     def setup_carla_client(self, client, params):
-        # redefine setup_client so the environment is not randomized. 
+        # redefine setup_client so the environment is not randomized.
         self.client = client
         self.param_sensors = params.get('sensors', {})
         self.carla_settings = CarlaSettings()
+        self.carla_settings.set(
+            SendNonPlayerAgentsInfo=params.get('SendNonPlayerAgentsInfo', True),
+            NumberOfVehicles=params.get('NumberOfVehicles', 20),
+            NumberOfPedestrians=params.get('NumberOfPedestrians', 40),
+            WeatherId=params.get('WeatherId', 1),
+            SynchronousMode=params.get('SynchronousMode', True),
+            QualityLevel=params.get('QualityLevel', 'Low'),
+            SeedVehicles=params.get('SeedVehicles', 123456789),
+            SeedPedestrians=params.get('SeedPedestrians', 123456789)
+        )
 
 
     def run(self):

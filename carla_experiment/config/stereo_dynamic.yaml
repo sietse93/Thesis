@@ -5,10 +5,10 @@ carla:
   SynchronousMode: True
   SendNonPlayerAgentsInfo: True
   NumberOfVehicles: 30
-  NumberOfPedestrians: 15
+  NumberOfPedestrians: 0
   WeatherId: 1
-  SeedVehicles: 123456789
-  SeedPedestrians: 123456789
+  SeedVehicles: 2
+  SeedPedestrians: 1
 
   sensors:
     camera_left:
