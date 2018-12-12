@@ -16,7 +16,7 @@ class CarlaRosBridgeWithBagExperiment(CarlaRosBridgeExperiment):
     def __init__(self, *args, **kwargs):
         super(CarlaRosBridgeWithBagExperiment, self).__init__(*args, **kwargs)
         rosbag_fname = rospy.get_param('rosbag_fname')
-        self.bag = rosbag.Bag(rosbag_fname, mode='w')
+        self.bag = rosbag.Bag(rosbag_fname + ".bag", mode='w')
 
     def send_msgs(self):
         for publisher, msg in self.msgs_to_publish:

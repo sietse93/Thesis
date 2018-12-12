@@ -9,6 +9,7 @@ or autopilot off and using these logged controls.
 import rospy
 from rosgraph_msgs.msg import Clock
 from carla_ros_bridge.bridge import CarlaRosBridge
+from carla.settings import CarlaSettings
 
 
 class CarlaRosBridgeExperiment(CarlaRosBridge):
@@ -23,11 +24,19 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
         # This will contain the control data which is either written or read
         self.control_data = {}
 
+
         # This will only be used if control data needs to be read
         self.log_control_gamestamp = []
         self.log_control_steer = []
         self.log_control_throttle = []
         self.log_control_brake = []
+
+    def setup_carla_client(self, client, params):
+        # redefine setup_client so the environment is not randomized. 
+        self.client = client
+        self.param_sensors = params.get('sensors', {})
+        self.carla_settings = CarlaSettings()
+
 
     def run(self):
         self.publishers['clock'] = rospy.Publisher(
@@ -90,7 +99,7 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
 
     def __enter__(self):
         # Using this method so you don't use with .. as functions outside the while loop
-        # Using with .. as inside the loop will only save one line.
+        # Since using with .. as inside the loop will only log one line.
         if rospy.get_param('carla_autopilot', True):
             self.control_data = open("/home/sietse/control.txt", 'w')
             rospy.loginfo("Opened control file to write")
