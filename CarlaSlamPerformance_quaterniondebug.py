@@ -64,10 +64,10 @@ class CarlaSlamEvaluate(object):
                 new_position = [-floatLine[3], floatLine[1], -floatLine[2]]
                 self.position.append(new_position)
                 quaternions = floatLine[4:8]
-                orb_roll, orb_pitch, orb_yaw = tf.transformations.euler_from_quaternion(quaternions)
-                new_orientation = [orb_yaw, -orb_roll, -orb_pitch]
-                self.orientation.append(new_orientation)
-                quaternions = tf.transformations.quaternion_from_euler(new_orientation[0], new_orientation[1], new_orientation[2])
+                # orb_roll, orb_pitch, orb_yaw = tf.transformations.euler_from_quaternion(quaternions)
+                # new_orientation = [orb_yaw, -orb_roll, -orb_pitch]
+                # self.orientation.append(new_orientation)
+                # quaternions = tf.transformations.quaternion_from_euler(new_orientation[0], new_orientation[1], new_orientation[2])
                 self.quaternion.append(quaternions)
                 q = tf.transformations.quaternion_matrix(quaternions)
                 q[0][3] = new_position[0]
@@ -76,7 +76,37 @@ class CarlaSlamEvaluate(object):
                 self.Q.append(q)
 
 
-# def evaluate_trajectory(gt=CarlaSlamEvaluate, Slam=CarlaSlamEvaluate):
+def compare_quaternions(gt, slam):
+
+    gt_q1 = [quaternion[0] for quaternion in gt.quaternion]
+    gt_q2 = [quaternion[1] for quaternion in gt.quaternion]
+    gt_q3 = [quaternion[2] for quaternion in gt.quaternion]
+    gt_q4 = [quaternion[3] for quaternion in gt.quaternion]
+
+    orb_q1 = [quaternion[0] for quaternion in slam.quaternion]
+    orb_q2 = [quaternion[1] for quaternion in slam.quaternion]
+    orb_q3 = [quaternion[2] for quaternion in slam.quaternion]
+    orb_q4 = [quaternion[3] for quaternion in slam.quaternion]
+
+    plt.figure("Quaternions")
+    plt.subplot(4, 1, 1)
+    plt.plot(gt.time, gt_q1, label=gt.label)
+    plt.plot(slam.time, orb_q1, label=slam.label)
+
+    plt.subplot(4, 1, 2)
+    plt.plot(gt.time, gt_q2, label=gt.label)
+    plt.plot(slam.time, orb_q2, label=slam.label)
+
+    plt.subplot(4, 1, 3)
+    plt.plot(gt.time, gt_q3, label=gt.label)
+    plt.plot(slam.time, orb_q3, label=slam.label)
+
+    plt.subplot(4, 1, 4)
+    plt.plot(gt.time, gt_q4, label=gt.label)
+    plt.plot(slam.time, orb_q4, label=slam.label)
+    plt.legend()
+
+
 def evaluate_trajectory(GT, SLAM):
 
     plt.figure("Trajectory")
@@ -330,10 +360,7 @@ def main():
     GT = [gt_data_static, gt_data_dynamic]
     ORB =[orb_data_static, orb_data_dynamic]
 
-    evaluate_trajectory(GT, ORB)
-    # evaluate_pose_over_time(GT, ORB)
-    evaluate_pose_over_time([gt_data_dynamic], [orb_data_dynamic])
-    evaluate_pose_over_time([gt_data_static], [orb_data_static])
+    compare_quaternions(gt_data_static, orb_data_static)
     plt.show()
 
 if __name__=="__main__":

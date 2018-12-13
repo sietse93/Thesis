@@ -94,7 +94,7 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
                 self.control_data.write('{} {} {} {} \n'.format(self.carla_game_stamp,
                                                                     control.steer,
                                                                     control.throttle,
-                                                                     control.brake))
+                                                                    control.brake))
             # handle control: use logged control commands if autopilot is false
             else:
                 control = measurements.player_measurements.autopilot_control

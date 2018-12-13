@@ -34,8 +34,8 @@ class CarlaSlamEvaluate(object):
             if self.method == "gt":
                 # Groundtruth is seperated by two spaces
                 line = line_data.split("  ")
-                # floatLine = [float(element) for element in line[0:-1]]
-                floatLine = [float(element) for element in line]
+                floatLine = [float(element) for element in line[0:-1]]
+                # floatLine = [float(element) for element in line]
                 self.time.append(floatLine[0])
                 # Make sure that vehicle starts at 0
                 if index == 0:
@@ -248,35 +248,26 @@ def evaluate_PSE(gt=CarlaSlamEvaluate, Slam=CarlaSlamEvaluate, time_step=float):
 
 
 def main():
-    # method_gt = "gt"
-    # gt_file= "/home/sietse/carla_experiment_data/stereo_static_short.txt"
-    # with CarlaSlamEvaluate(method_gt, gt_file) as gt_data:
-    #     gt_data.process_data()
-    #
-    # method_orb = "orb"
-    # orb_file = "/home/sietse/carla_experiment_data/stereo_static_short_orb.txt"
-    # with CarlaSlamEvaluate(method_orb, orb_file) as orb_data:
-    #     orb_data.process_data()
-    #
-    # time_step_evaluation = 1
-    #
-    # evaluate_trajectory(gt=gt_data, Slam=orb_data)
-    #
-    # evaluate_pose_over_time(gt=gt_data, Slam=orb_data)
-    #
-    # evaluate_PSE(gt=gt_data, Slam=orb_data, time_step=time_step_evaluation)
-    #
-    # plt.show()
-
     method_gt = "gt"
-    gt_file_dynamic = "/home/sietse/carla_experiment_data/stereo_dynamic_ap_on.txt"
-    with CarlaSlamEvaluate(method_gt, gt_file_dynamic) as gt_data_dynamic:
-        gt_data_dynamic.process_data()
+    gt_file= "/home/sietse/carla_experiment_data/stereo_static_short.txt"
+    with CarlaSlamEvaluate(method_gt, gt_file) as gt_data:
+        gt_data.process_data()
 
-    method_orb ="orb"
-    orb_file_dynamic = "/home/sietse/carla_experiment_data/stereo_dynamic_ap_on_orb.txt"
-    with CarlaSlamEvaluate(method_orb, orb_file_dynamic) as orb_data_dynamic:
-        orb_data_dynamic.process_data()
+    method_orb = "orb"
+    orb_file = "/home/sietse/carla_experiment_data/stereo_static_short_orb.txt"
+    with CarlaSlamEvaluate(method_orb, orb_file) as orb_data:
+        orb_data.process_data()
+
+    time_step_evaluation = 1
+
+    evaluate_trajectory(gt=gt_data, Slam=orb_data)
+
+    evaluate_pose_over_time(gt=gt_data, Slam=orb_data)
+
+    evaluate_PSE(gt=gt_data, Slam=orb_data, time_step=time_step_evaluation)
+
+    plt.show()
+
 
 if __name__=="__main__":
     main()
