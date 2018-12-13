@@ -13,10 +13,18 @@ from bridge_experiment import CarlaRosBridgeExperiment
 
 
 class CarlaRosBridgeWithBagExperiment(CarlaRosBridgeExperiment):
-    def __init__(self, *args, **kwargs):
-        super(CarlaRosBridgeWithBagExperiment, self).__init__(*args, **kwargs)
-        rosbag_fname = rospy.get_param('rosbag_fname')
-        self.bag = rosbag.Bag(rosbag_fname + ".bag", mode='w')
+    def __init__(self, client, params, start_position, *args, **kwargs):
+        super(CarlaRosBridgeWithBagExperiment, self).__init__(client, params, start_position, *args, **kwargs)
+
+        # Bag file is created in the users home directory
+        # Automatic name generated based on Number of Vehicles and the Seed used
+        print(os.path.expanduser('~'))
+        NV = params.get('NumberOfVehicles', None)
+        SV = params.get('SeedVehicles', None)
+        home_user = os.path.expanduser('~')
+        filename = home_user + "/NV_{}_SV_{}.bag"
+        filename = filename.format(NV, SV)
+        self.bag = rosbag.Bag(filename, mode='w')
 
     def send_msgs(self):
         for publisher, msg in self.msgs_to_publish:

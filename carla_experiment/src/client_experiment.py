@@ -25,12 +25,16 @@ def main():
     with make_carla_client(host, port) as client:
         rospy.loginfo("Connected")
 
+        # Where should the car start
         start_position = 10
 
-        # bridge_cls = CarlaRosBridgeWithBagExperiment if rospy.get_param(
-        #     'rosbag_fname', '') else CarlaRosBridgeExperiment
-        bridge_cls = CarlaRosBridgeWithBagExperiment
-        with bridge_cls(client=client, params=params, start_position=start_position) as carla_ros_bridge:
+        # if the gt is logged, a bag file will be created.
+        if rospy.get_param('log_gt', True):
+            bridge_cls = CarlaRosBridgeWithBagExperiment(client=client, params=params, start_position=start_position)
+        else:
+            bridge_cls = CarlaRosBridgeExperiment(client=client, params=params, start_position=start_position)
+
+        with bridge_cls as carla_ros_bridge:
             rospy.on_shutdown(carla_ros_bridge.on_shutdown)
             carla_ros_bridge.run()
 
