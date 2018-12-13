@@ -9,7 +9,7 @@ class CarlaGtLogger(object):
 
     def __init__(self):
         self.fname = rospy.get_param('rosbag_fname')
-        self.logger_layout = '%f   %f   %f  %f  %f  %f  %f  %f\n'
+        self.logger_layout = '%f  %f  %f  %f  %f  %f  %f  %f\n'
         self.gt_logger = {}
 
     def callback(self, data):

@@ -10,6 +10,7 @@ class CarlaSlamEvaluate(object):
     def __init__(self, method, flocation):
         self.method = method
         self.flocation = flocation
+        self.label = ""
         self.time = []
         self.position = []
         self.orientation = []
@@ -21,6 +22,8 @@ class CarlaSlamEvaluate(object):
 
     def __enter__(self):
         self.data = open(self.flocation, "r")
+        # This should label the object to the file name which should be descriptive enough
+        self.label = self.flocation[35:]
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -73,19 +76,24 @@ class CarlaSlamEvaluate(object):
                 self.Q.append(q)
 
 
-def evaluate_trajectory(gt=CarlaSlamEvaluate, Slam = CarlaSlamEvaluate):
-    # extract data
-    gt_x = [positions[0] for positions in gt.position]
-    gt_y = [positions[1] for positions in gt.position]
-    Slam_x = [positions[0] for positions in Slam.position]
-    Slam_y = [positions[1] for positions in Slam.position]
+# def evaluate_trajectory(gt=CarlaSlamEvaluate, Slam=CarlaSlamEvaluate):
+def evaluate_trajectory(GT, SLAM):
 
     plt.figure("Trajectory")
     plt.title('Trajectory')
     plt.xlabel("x position")
     plt.ylabel("y position")
-    plt.plot(gt_x, gt_y, label=gt.method)
-    plt.plot(Slam_x, Slam_y, label=Slam.method)
+
+    for gt in GT:
+        gt_x = [positions[0] for positions in gt.position]
+        gt_y = [positions[1] for positions in gt.position]
+        plt.plot(gt_x, gt_y, label=gt.label)
+
+    for Slam in SLAM:
+        Slam_x = [positions[0] for positions in Slam.position]
+        Slam_y = [positions[1] for positions in Slam.position]
+        plt.plot(Slam_x, Slam_y, label=Slam.label)
+
     plt.legend()
 
 
@@ -277,6 +285,20 @@ def main():
     orb_file_dynamic = "/home/sietse/carla_experiment_data/stereo_dynamic_ap_on_orb.txt"
     with CarlaSlamEvaluate(method_orb, orb_file_dynamic) as orb_data_dynamic:
         orb_data_dynamic.process_data()
+
+    gt_file_static="/home/sietse/carla_experiment_data/stereo_static_ap_off.txt"
+    with CarlaSlamEvaluate(method_gt, gt_file_static) as gt_data_static:
+        gt_data_static.process_data()
+
+    orb_file_static="/home/sietse/carla_experiment_data/stereo_static_ap_off_orb.txt"
+    with CarlaSlamEvaluate(method_orb, orb_file_static) as orb_data_static:
+        orb_data_static.process_data()
+
+    GT = [gt_data_static, gt_data_dynamic]
+    ORB =[orb_data_static, orb_data_dynamic]
+
+    evaluate_trajectory(GT, ORB)
+    plt.show()
 
 if __name__=="__main__":
     main()

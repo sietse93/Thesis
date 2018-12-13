@@ -7,8 +7,9 @@ carla:
   NumberOfVehicles: 30
   NumberOfPedestrians: 0
   WeatherId: 1
-  SeedVehicles: 2
+  SeedVehicles: 1
   SeedPedestrians: 1
+  DisableTwoWheeledVehicles: True
 
   sensors:
     camera_left:

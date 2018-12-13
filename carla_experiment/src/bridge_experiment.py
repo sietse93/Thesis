@@ -24,7 +24,6 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
         # This will contain the control data which is either written or read
         self.control_data = {}
 
-
         # This will only be used if control data needs to be read
         self.log_control_gamestamp = []
         self.log_control_steer = []
@@ -46,7 +45,6 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
             SeedVehicles=params.get('SeedVehicles', 123456789),
             SeedPedestrians=params.get('SeedPedestrians', 123456789)
         )
-
 
     def run(self):
         self.publishers['clock'] = rospy.Publisher(

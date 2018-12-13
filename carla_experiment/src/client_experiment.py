@@ -27,8 +27,9 @@ def main():
 
         start_position = 10
 
-        bridge_cls = CarlaRosBridgeWithBagExperiment if rospy.get_param(
-             'rosbag_fname', '') else CarlaRosBridgeExperiment
+        # bridge_cls = CarlaRosBridgeWithBagExperiment if rospy.get_param(
+        #     'rosbag_fname', '') else CarlaRosBridgeExperiment
+        bridge_cls = CarlaRosBridgeWithBagExperiment
         with bridge_cls(client=client, params=params, start_position=start_position) as carla_ros_bridge:
             rospy.on_shutdown(carla_ros_bridge.on_shutdown)
             carla_ros_bridge.run()
