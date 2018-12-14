@@ -10,6 +10,7 @@ class CarlaSlamEvaluate(object):
     def __init__(self, method, flocation):
         self.method = method
         self.flocation = flocation
+        self.label = ""
         self.time = []
         self.position = []
         self.orientation = []
@@ -21,6 +22,9 @@ class CarlaSlamEvaluate(object):
 
     def __enter__(self):
         self.data = open(self.flocation, "r")
+        # This should label the object to the file name which should be descriptive enough
+        # Removes "/home/sietse/carla_experiment" from string (35 char long)
+        self.label = self.flocation[35:]
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -34,8 +38,8 @@ class CarlaSlamEvaluate(object):
             if self.method == "gt":
                 # Groundtruth is seperated by two spaces
                 line = line_data.split("  ")
-                floatLine = [float(element) for element in line[0:-1]]
-                # floatLine = [float(element) for element in line]
+                # floatLine = [float(element) for element in line[0:-1]]
+                floatLine = [float(element) for element in line]
                 self.time.append(floatLine[0])
                 # Make sure that vehicle starts at 0
                 if index == 0:
@@ -58,13 +62,13 @@ class CarlaSlamEvaluate(object):
                 floatLine = [float(element) for element in line]
                 self.time.append(floatLine[0])
                 # Convert orb axis to ros axis
-                new_position = [floatLine[3], -floatLine[1], -floatLine[2]]
+                new_position = [-floatLine[3], floatLine[1], -floatLine[2]]
                 self.position.append(new_position)
                 quaternions = floatLine[4:8]
-                orb_roll, orb_pitch, orb_yaw = tf.transformations.euler_from_quaternion(quaternions)
-                new_orientation = [orb_yaw, -orb_roll, -orb_pitch]
-                self.orientation.append(new_orientation)
-                quaternions = tf.transformations.quaternion_from_euler(new_orientation[0], new_orientation[1], new_orientation[2])
+                # orb_roll, orb_pitch, orb_yaw = tf.transformations.euler_from_quaternion(quaternions)
+                # new_orientation = [orb_yaw, -orb_roll, -orb_pitch]
+                # self.orientation.append(new_orientation)
+                # quaternions = tf.transformations.quaternion_from_euler(new_orientation[0], new_orientation[1], new_orientation[2])
                 self.quaternion.append(quaternions)
                 q = tf.transformations.quaternion_matrix(quaternions)
                 q[0][3] = new_position[0]
@@ -73,75 +77,143 @@ class CarlaSlamEvaluate(object):
                 self.Q.append(q)
 
 
-def evaluate_trajectory(gt=CarlaSlamEvaluate, Slam = CarlaSlamEvaluate):
-    # extract data
-    gt_x = [positions[0] for positions in gt.position]
-    gt_y = [positions[1] for positions in gt.position]
-    Slam_x = [positions[0] for positions in Slam.position]
-    Slam_y = [positions[1] for positions in Slam.position]
+def compare_quaternions(gt, slam):
+
+    gt_q1 = [quaternion[0] for quaternion in gt.quaternion]
+    gt_q2 = [quaternion[1] for quaternion in gt.quaternion]
+    gt_q3 = [quaternion[2] for quaternion in gt.quaternion]
+    gt_q4 = [quaternion[3] for quaternion in gt.quaternion]
+
+    orb_q1 = [quaternion[0] for quaternion in slam.quaternion]
+    orb_q2 = [quaternion[1] for quaternion in slam.quaternion]
+    orb_q3 = [quaternion[2] for quaternion in slam.quaternion]
+    orb_q4 = [quaternion[3] for quaternion in slam.quaternion]
+
+    plt.figure("Quaternions")
+    plt.subplot(4, 1, 1)
+    plt.plot(gt.time, gt_q1, label=gt.label)
+    plt.plot(slam.time, orb_q1, label=slam.label)
+
+    plt.subplot(4, 1, 2)
+    plt.plot(gt.time, gt_q2, label=gt.label)
+    plt.plot(slam.time, orb_q2, label=slam.label)
+
+    plt.subplot(4, 1, 3)
+    plt.plot(gt.time, gt_q3, label=gt.label)
+    plt.plot(slam.time, orb_q3, label=slam.label)
+
+    plt.subplot(4, 1, 4)
+    plt.plot(gt.time, gt_q4, label=gt.label)
+    plt.plot(slam.time, orb_q4, label=slam.label)
+    plt.legend()
+
+
+def evaluate_trajectory(GT, SLAM):
 
     plt.figure("Trajectory")
     plt.title('Trajectory')
     plt.xlabel("x position")
     plt.ylabel("y position")
-    plt.plot(gt_x, gt_y, label=gt.method)
-    plt.plot(Slam_x, Slam_y, label=Slam.method)
+
+    for gt in GT:
+        gt_x = [positions[0] for positions in gt.position]
+        gt_y = [positions[1] for positions in gt.position]
+        plt.plot(gt_x, gt_y, label=gt.label)
+
+    for Slam in SLAM:
+        Slam_x = [positions[0] for positions in Slam.position]
+        Slam_y = [positions[1] for positions in Slam.position]
+        plt.plot(Slam_x, Slam_y, label=Slam.label)
+
     plt.legend()
 
 
-def evaluate_pose_over_time(gt=CarlaSlamEvaluate, Slam = CarlaSlamEvaluate):
-    gt_x = [positions[0] for positions in gt.position]
-    gt_y = [positions[1] for positions in gt.position]
-    gt_z = [positions[2] for positions in gt.position]
-    gt_roll = [orientations[0] for orientations in gt.orientation]
-    gt_pitch = [orientations[1] for orientations in gt.orientation]
-    gt_yaw = [orientations[2] for orientations in gt.orientation]
+def evaluate_pose_over_time(GT, SLAM):
 
-    Slam_x = [positions[0] for positions in Slam.position]
-    Slam_y = [positions[1] for positions in Slam.position]
-    Slam_z = [positions[2] for positions in Slam.position]
-    Slam_roll = [orientations[0] for orientations in Slam.orientation]
-    Slam_pitch = [orientations[1] for orientations in Slam.orientation]
-    Slam_yaw = [orientations[2] for orientations in Slam.orientation]
+    """Plots the pose (xyz and Euler angles) over time of both the groundtruth and the SLAM algorithm"""
 
-    plt.figure("Pose over time")
+    # create layout for the plots
+    # plt.figure("Pose over time")
+    plt.figure()
     plt.title('Pose over time')
 
     plt.subplot(3, 2, 1)
-    plt.plot(gt.time, gt_x, label=gt.method)
-    plt.plot(Slam.time, Slam_x, label=Slam.method)
     plt.xlabel("time [s]")
     plt.ylabel("x position")
 
     plt.subplot(3, 2, 3)
-    plt.plot(gt.time, gt_y, label=gt.method)
-    plt.plot(Slam.time, Slam_y, label=Slam.method)
     plt.xlabel("time [s]")
     plt.ylabel("y position")
 
     plt.subplot(3, 2, 5)
-    plt.plot(gt.time, gt_z, label=gt.method)
-    plt.plot(Slam.time, Slam_z, label=Slam.method)
     plt.xlabel("time [s]")
     plt.ylabel("z position")
 
     plt.subplot(3, 2, 2)
-    plt.plot(gt.time, gt_roll, label=gt.method)
-    plt.plot(Slam.time, Slam_roll, label=Slam.method)
     plt.xlabel("time [s]")
     plt.ylabel("roll [rad]")
 
     plt.subplot(3, 2, 4)
-    plt.plot(gt.time, gt_pitch, label=gt.method)
-    plt.plot(Slam.time, Slam_pitch, label=Slam.method)
     plt.xlabel("time [s]")
     plt.ylabel("pitch [rad]")
 
     plt.subplot(3, 2, 6)
-    plt.plot(gt.time, gt_yaw, label=gt.method)
-    plt.plot(Slam.time, Slam_yaw, label=Slam.method)
     plt.xlabel("time [s]")
     plt.ylabel("yaw [rad]")
+
+    # plot all the groundtruths
+    for gt in GT:
+        gt_x = [positions[0] for positions in gt.position]
+        gt_y = [positions[1] for positions in gt.position]
+        gt_z = [positions[2] for positions in gt.position]
+        gt_roll = [orientations[0] for orientations in gt.orientation]
+        gt_pitch = [orientations[1] for orientations in gt.orientation]
+        gt_yaw = [orientations[2] for orientations in gt.orientation]
+
+        plt.subplot(3, 2, 1)
+        plt.plot(gt.time, gt_x, label=gt.label)
+
+        plt.subplot(3, 2, 3)
+        plt.plot(gt.time, gt_y, label=gt.label)
+
+        plt.subplot(3, 2, 5)
+        plt.plot(gt.time, gt_z, label=gt.label)
+
+        plt.subplot(3, 2, 2)
+        plt.plot(gt.time, gt_roll, label=gt.label)
+
+        plt.subplot(3, 2, 4)
+        plt.plot(gt.time, gt_pitch, label=gt.label)
+
+        plt.subplot(3, 2, 6)
+        plt.plot(gt.time, gt_yaw, label=gt.label)
+
+    # plot all the SLAM data
+    for Slam in SLAM:
+        Slam_x = [positions[0] for positions in Slam.position]
+        Slam_y = [positions[1] for positions in Slam.position]
+        Slam_z = [positions[2] for positions in Slam.position]
+        Slam_roll = [orientations[0] for orientations in Slam.orientation]
+        Slam_pitch = [orientations[1] for orientations in Slam.orientation]
+        Slam_yaw = [orientations[2] for orientations in Slam.orientation]
+
+        plt.subplot(3, 2, 1)
+        plt.plot(Slam.time, Slam_x, label=Slam.label)
+
+        plt.subplot(3, 2, 3)
+        plt.plot(Slam.time, Slam_y, label=Slam.label)
+
+        plt.subplot(3, 2, 5)
+        plt.plot(Slam.time, Slam_z, label=Slam.label)
+
+        plt.subplot(3, 2, 2)
+        plt.plot(Slam.time, Slam_roll, label=Slam.label)
+
+        plt.subplot(3, 2, 4)
+        plt.plot(Slam.time, Slam_pitch, label=Slam.label)
+
+        plt.subplot(3, 2, 6)
+        plt.plot(Slam.time, Slam_yaw, label=Slam.label)
 
     plt.legend()
 
@@ -248,26 +320,49 @@ def evaluate_PSE(gt=CarlaSlamEvaluate, Slam=CarlaSlamEvaluate, time_step=float):
 
 
 def main():
+    # method_gt = "gt"
+    # gt_file= "/home/sietse/carla_experiment_data/stereo_static_short.txt"
+    # with CarlaSlamEvaluate(method_gt, gt_file) as gt_data:
+    #     gt_data.process_data()
+    #
+    # method_orb = "orb"
+    # orb_file = "/home/sietse/carla_experiment_data/stereo_static_short_orb.txt"
+    # with CarlaSlamEvaluate(method_orb, orb_file) as orb_data:
+    #     orb_data.process_data()
+    #
+    # time_step_evaluation = 1
+    #
+    # evaluate_trajectory(gt=gt_data, Slam=orb_data)
+    #
+    # evaluate_pose_over_time(gt=gt_data, Slam=orb_data)
+    #
+    # evaluate_PSE(gt=gt_data, Slam=orb_data, time_step=time_step_evaluation)
+    #
+    # plt.show()
+
     method_gt = "gt"
-    gt_file= "/home/sietse/carla_experiment_data/stereo_static_short.txt"
-    with CarlaSlamEvaluate(method_gt, gt_file) as gt_data:
-        gt_data.process_data()
+    gt_file_dynamic = "/home/sietse/carla_experiment_data/stereo_dynamic_ap_on.txt"
+    with CarlaSlamEvaluate(method_gt, gt_file_dynamic) as gt_data_dynamic:
+        gt_data_dynamic.process_data()
 
-    method_orb = "orb"
-    orb_file = "/home/sietse/carla_experiment_data/stereo_static_short_orb.txt"
-    with CarlaSlamEvaluate(method_orb, orb_file) as orb_data:
-        orb_data.process_data()
+    method_orb ="orb"
+    orb_file_dynamic = "/home/sietse/carla_experiment_data/stereo_dynamic_ap_on_orb.txt"
+    with CarlaSlamEvaluate(method_orb, orb_file_dynamic) as orb_data_dynamic:
+        orb_data_dynamic.process_data()
 
-    time_step_evaluation = 1
+    gt_file_static="/home/sietse/carla_experiment_data/stereo_static_ap_off.txt"
+    with CarlaSlamEvaluate(method_gt, gt_file_static) as gt_data_static:
+        gt_data_static.process_data()
 
-    evaluate_trajectory(gt=gt_data, Slam=orb_data)
+    orb_file_static="/home/sietse/carla_experiment_data/stereo_static_ap_off_orb.txt"
+    with CarlaSlamEvaluate(method_orb, orb_file_static) as orb_data_static:
+        orb_data_static.process_data()
 
-    evaluate_pose_over_time(gt=gt_data, Slam=orb_data)
+    GT = [gt_data_static, gt_data_dynamic]
+    ORB =[orb_data_static, orb_data_dynamic]
 
-    evaluate_PSE(gt=gt_data, Slam=orb_data, time_step=time_step_evaluation)
-
+    compare_quaternions(gt_data_static, orb_data_static)
     plt.show()
-
 
 if __name__=="__main__":
     main()
