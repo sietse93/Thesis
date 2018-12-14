@@ -4,6 +4,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import tf
 from pyquaternion import Quaternion
+import math
 
 
 class CarlaSlamEvaluate(object):
@@ -23,7 +24,7 @@ class CarlaSlamEvaluate(object):
 
         # position [x, y, z] initialised at [0, 0, 0]
         # Use a right handed coordinate system (z points upwards)
-        self.position = []
+        self.positions = []
 
         # orientation [roll, pitch, yaw] in degrees
         self.orientations = []
@@ -65,7 +66,7 @@ class CarlaSlamEvaluate(object):
                 line = line_data.split(" ")
                 float_line = [float(element) for element in line]
 
-                # convert time from ms to s
+                # convert time from [ms] to [s]
                 time = float_line[0]*10**(-3)
                 self.time.append(time)
 
@@ -82,13 +83,15 @@ class CarlaSlamEvaluate(object):
                 orientation = np.array([roll, pitch, yaw])
 
                 # Make sure that vehicle starts at 0
+                # This is not correct, forward driving is not x right now
                 if index == 0:
                     init_pos = position
-                self.position.append(position-init_pos)
+                self.positions.append(position-init_pos)
                 self.orientations.append(orientation)
 
                 # convert euler angles to quaternions
                 # rotation order: static axis, roll, pitch, yaw
+                # could be that there are change in sign in these quaternions
                 quaternion = tf.transformations.quaternion_from_euler(roll, pitch, yaw, axes='sxyz')
                 self.quaternions.append(quaternion)
 
@@ -104,26 +107,81 @@ class CarlaSlamEvaluate(object):
 
             if self.method == "orb":
                 line = line_data.split(" ")
-                floatLine = [float(element) for element in line]
-                self.time.append(floatLine[0])
+                float_line = [float(element) for element in line]
+
+                # time is already in [s]
+                time = float_line[0]
+                self.time.append(time)
+
+                # pose estimation in ORB coordinate system
+                x_orb = float_line[1]
+                y_orb = float_line[2]
+                z_orb = float_line[3]
+                q1_orb = float_line[4]
+                q2_orb = float_line[5]
+                q3_orb = float_line[6]
+                q4_orb = float_line[7]
+
                 # Convert orb axis to ros axis
-                new_position = [-floatLine[3], floatLine[1], -floatLine[2]]
-                self.position.append(new_position)
-                quaternion = floatLine[4:8]
-                # orb_roll, orb_pitch, orb_yaw = tf.transformations.euler_from_quaternion(quaternions)
-                # new_orientation = [orb_yaw, -orb_roll, -orb_pitch]
-                # self.orientation.append(new_orientation)
-                # quaternions = tf.transformations.quaternion_from_euler(new_orientation[0], new_orientation[1], new_orientation[2])
+                x_new = z_orb
+                y_new = -x_orb
+                z_new = -y_orb
+                position = [x_new, y_new, z_new]
+                self.positions.append(position)
+
+                # Quaternions is defined as iq1+jq2+kq3+q4
+                # The axis system of i, j, k  are incorrect and need to be converted to ROS axis system
+
+                # What I thought would give good results
+                # q1_new = q3_orb
+                # q2_new = -q1_orb
+                # q3_new = -q2_orb
+                # q4_new = q4_orb
+
+                # What actually gives good results
+                q1_new = -q3_orb
+                q2_new = q1_orb
+                q3_new = -q2_orb
+                q4_new = q4_orb
+                # could have to do with what is thought as positive in a quaternion system.
+                
+                quaternion = [q1_new, q2_new, q3_new, q4_new]
                 self.quaternions.append(quaternion)
                 q = tf.transformations.quaternion_matrix(quaternion)
-                q[0][3] = new_position[0]
-                q[1][3] = new_position[1]
-                q[2][3] = new_position[2]
+                q[0][3] = x_new
+                q[1][3] = y_new
+                q[2][3] = z_new
                 self.Q.append(q)
+
+                roll, pitch, yaw = tf.transformations.euler_from_quaternion(quaternion, axes='sxyz')
+                orientation = np.array([roll, pitch, yaw])
+                orientation = np.degrees(orientation)
+                self.orientations.append(orientation)
+
+
+def compare_position(methods):
+    """plots the position of a list of CarlaSlamEvaluate objects"""
+
+    plt.figure()
+
+    for method in methods:
+        x = [position[0] for position in method.positions]
+        y = [position[1] for position in method.positions]
+        z = [position[2] for position in method.positions]
+
+        plt.subplot(3, 1, 1)
+        plt.plot(method.time, x, label=method.label)
+
+        plt.subplot(3, 1, 2)
+        plt.plot(method.time, y, label=method.label)
+
+        plt.subplot(3, 1, 3)
+        plt.plot(method.time, z, label=method.label)
+    plt.legend()
 
 
 def compare_quaternions(methods):
-    """Plots the quaternions of a list of CarlaSlamEvaluate object """
+    """Plots the quaternions of a list of CarlaSlamEvaluate objects """
     plt.figure("Quaternions")
 
     for method in methods:
@@ -231,12 +289,12 @@ def evaluate_pose_over_time(GT, SLAM):
 
     # plot all the groundtruths
     for gt in GT:
-        gt_x = [positions[0] for positions in gt.position]
-        gt_y = [positions[1] for positions in gt.position]
-        gt_z = [positions[2] for positions in gt.position]
-        gt_roll = [orientations[0] for orientations in gt.orientation]
-        gt_pitch = [orientations[1] for orientations in gt.orientation]
-        gt_yaw = [orientations[2] for orientations in gt.orientation]
+        gt_x = [position[0] for position in gt.positions]
+        gt_y = [position[1] for position in gt.positions]
+        gt_z = [position[2] for position in gt.positions]
+        gt_roll = [orientation[0] for orientation in gt.orientations]
+        gt_pitch = [orientation[1] for orientation in gt.orientations]
+        gt_yaw = [orientation[2] for orientation in gt.orientations]
 
         plt.subplot(3, 2, 1)
         plt.plot(gt.time, gt_x, label=gt.label)
@@ -258,12 +316,12 @@ def evaluate_pose_over_time(GT, SLAM):
 
     # plot all the SLAM data
     for Slam in SLAM:
-        Slam_x = [positions[0] for positions in Slam.position]
-        Slam_y = [positions[1] for positions in Slam.position]
-        Slam_z = [positions[2] for positions in Slam.position]
-        Slam_roll = [orientations[0] for orientations in Slam.orientation]
-        Slam_pitch = [orientations[1] for orientations in Slam.orientation]
-        Slam_yaw = [orientations[2] for orientations in Slam.orientation]
+        Slam_x = [position[0] for position in Slam.positions]
+        Slam_y = [position[1] for position in Slam.positions]
+        Slam_z = [position[2] for position in Slam.positions]
+        Slam_roll = [orientation[0] for orientation in Slam.orientations]
+        Slam_pitch = [orientation[1] for orientation in Slam.orientations]
+        Slam_yaw = [orientation[2] for orientation in Slam.orientations]
 
         plt.subplot(3, 2, 1)
         plt.plot(Slam.time, Slam_x, label=Slam.label)
@@ -394,8 +452,15 @@ def main():
     with CarlaSlamEvaluate(method_gt, gt_file) as gt_data:
         gt_data.process_data()
 
-    compare_quaternions([gt_data])
-    compare_euler_angles([gt_data])
+    method_orb = "orb"
+    orb_file = "/home/sietse/NV_30_SV_1_orb.txt"
+    with CarlaSlamEvaluate(method_orb, orb_file) as orb_data:
+        orb_data.process_data()
+
+    evaluate_objects = [gt_data, orb_data]
+    compare_position(evaluate_objects)
+    compare_quaternions(evaluate_objects)
+    compare_euler_angles(evaluate_objects)
     plt.show()
 
 
