@@ -7,6 +7,7 @@ or autopilot off and using these logged controls.
 """
 
 import rospy
+import os
 from rosgraph_msgs.msg import Clock
 from carla_ros_bridge.bridge import CarlaRosBridge
 from carla.settings import CarlaSettings
@@ -29,6 +30,10 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
         self.log_control_steer = []
         self.log_control_throttle = []
         self.log_control_brake = []
+
+        # This will contain the ground truth pose data
+        self.gt_data = {}
+
 
     def setup_carla_client(self, client, params):
         # redefine setup_client so the environment is not randomized.
@@ -91,10 +96,12 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
             if rospy.get_param('carla_autopilot', True):
                 control = measurements.player_measurements.autopilot_control
                 self.client.send_control(control)
-                self.control_data.write('{} {} {} {} \n'.format(self.carla_game_stamp,
+                control_log_line = '{} {} {} {} \n'.format(self.carla_game_stamp,
                                                                     control.steer,
                                                                     control.throttle,
-                                                                    control.brake))
+                                                                    control.brake)
+                self.control_data.write(control_log_line)
+
             # handle control: use logged control commands if autopilot is false
             else:
                 control = measurements.player_measurements.autopilot_control
@@ -105,18 +112,53 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
                 rospy.loginfo(control)
                 self.client.send_control(control)
 
+            # handle groundtruth logging:
+            if rospy.get_param('log_gt', True):
+                location = measurements.player_measurements.transform.location
+                rotation = measurements.player_measurements.transform.rotation
+                gt_log_line = "{} {} {} {} {} {} {}\n".format(measurements.game_timestamp,
+                                                             location.x,
+                                                             location.y,
+                                                             location.z,
+                                                             rotation.roll,
+                                                             rotation.pitch,
+                                                             rotation.yaw)
+                self.gt_data.write(gt_log_line)
+
     def __enter__(self):
         # Using this method so you don't use with .. as functions outside the while loop
         # Since using with .. as inside the loop will only log one line.
+        # Any other log files can be added here.
+
+        # Create a name filling system that names file to number of vehicles and seed
+        # Will be used by the ground truth logger
+        home_user = os.path.expanduser('~')
+        params = rospy.get_param('carla')
+        NV = params.get('NumberOfVehicles', None)
+        SV = params.get('SeedVehicles', None)
+        filename = home_user+"/NV_{}_SV_{}".format(NV, SV)
+
+        # Log the controls of the autopilot if autopilot is on else read the logged autopilot commands
+        # We are not saving it under a specific scenario since (in theory) the autopilot is going to be set once.
+        # It is difficult to specify which autopilot needs to be used (could be set in a launch file though...)
         if rospy.get_param('carla_autopilot', True):
-            self.control_data = open("/home/sietse/control.txt", 'w')
+            self.control_data = open(home_user + "/control.txt", 'w')
             rospy.loginfo("Opened control file to write")
         else:
-            self.control_data = open("/home/sietse/control.txt", 'r')
+            self.control_data = open(home_user + "/control.txt", 'r')
             rospy.loginfo("Opened control file to read")
+
+        # # Log the groundtruth if the parameter is true
+        if rospy.get_param('log_gt', True):
+            self.gt_data = open(filename + "_gt.txt", 'w')
+            rospy.loginfo("Opened groundtruth file to write")
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.control_data.close()
         rospy.loginfo("Closed control file")
+
+        if rospy.get_param('log_gt', True):
+            self.gt_data.close()
+            rospy.loginfo("Closed groundtruth file")
         CarlaRosBridge.__exit__(self, exc_type, exc_val, exc_tb)

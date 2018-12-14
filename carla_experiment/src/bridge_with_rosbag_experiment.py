@@ -18,7 +18,6 @@ class CarlaRosBridgeWithBagExperiment(CarlaRosBridgeExperiment):
 
         # Bag file is created in the users home directory
         # Automatic name generated based on Number of Vehicles and the Seed used
-        print(os.path.expanduser('~'))
         NV = params.get('NumberOfVehicles', None)
         SV = params.get('SeedVehicles', None)
         home_user = os.path.expanduser('~')
