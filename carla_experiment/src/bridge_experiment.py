@@ -34,7 +34,6 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
         # This will contain the ground truth pose data
         self.gt_data = {}
 
-
     def setup_carla_client(self, client, params):
         # redefine setup_client so the environment is not randomized.
         self.client = client
@@ -130,13 +129,14 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
         # Since using with .. as inside the loop will only log one line.
         # Any other log files can be added here.
 
-        # Create a name filling system that names file to number of vehicles and seed
+        # Create a name filling system that names file to the starting location (SL)
+        # number of vehicles (NV) and seed number (SV)
         # Will be used by the ground truth logger
         home_user = os.path.expanduser('~')
         params = rospy.get_param('carla')
         NV = params.get('NumberOfVehicles', None)
         SV = params.get('SeedVehicles', None)
-        filename = home_user+"/NV_{}_SV_{}".format(NV, SV)
+        filename = home_user+"/SL_{}_NV_{}_SV_{}".format(self.start, NV, SV)
 
         # Log the controls of the autopilot if autopilot is on else read the logged autopilot commands
         # We are not saving it under a specific scenario since (in theory) the autopilot is going to be set once.

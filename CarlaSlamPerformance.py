@@ -67,26 +67,97 @@ class CarlaSlamEvaluate(object):
                 float_line = [float(element) for element in line]
 
                 # convert time from [ms] to [s]
-                time = float_line[0]*10**(-3)
+                time = round(float_line[0]*10**(-3),2)
                 self.time.append(time)
 
-                # position [x, y, z], but a left handed coordinate system
-                # we convert the axis system to a ros coordinate system, which is right handed
-                # note: orientation is in degrees
-                x = float_line[1]
-                y = - float_line[2]
-                z = float_line[3]
-                roll = -float_line[4]
-                pitch = float_line[5]
-                yaw = - float_line[6]
-                position = np.array([x, y, z])
-                orientation = np.array([roll, pitch, yaw])
+                # groundtruth is absolute position in unreal engine coordinate system
+                # left handed coordinate system
+                # orientation is in degrees
+                x_ue_abs = float_line[1]
+                y_ue_abs = float_line[2]
+                z_ue_abs = float_line[3]
+                roll_ue_abs = float_line[4]
+                pitch_ue_abs = float_line[5]
+                yaw_ue_abs = float_line[6]
 
                 # Make sure that vehicle starts at 0
-                # This is not correct, forward driving is not x right now
                 if index == 0:
-                    init_pos = position
-                self.positions.append(position-init_pos)
+                    x_ue_init = x_ue_abs
+                    y_ue_init = y_ue_abs
+                    z_ue_init = z_ue_abs
+                    yaw_ue_init = yaw_ue_abs
+
+                # UE measures the angle up until 180 degrees. Meaning 182 degrees == -178 degrees
+                # If the vehicle has turned already, so yaw_relative > 90 degrees
+                # the absolute value should be bigger than 180 degrees (positive and negative)
+                else:
+                    if abs(yaw_ue_rel) > 89 and abs(yaw_ue_abs-yaw_ue_temp) > 170:
+                        sign = np.sign(yaw_ue_abs)
+                        # if sign is positive, it originally came from -180
+                        if sign > 0:
+                            yaw_ue_abs = -180-(180-abs(yaw_ue_abs))
+                        # if sign is negative it came from 180
+                        if sign < 0:
+                            yaw_ue_abs = 180 + (180-abs(yaw_ue_abs))
+                    # if the vehicle starts at 180 degrees it will originally fluctuate between 179 and -179
+                    elif abs(yaw_ue_abs - yaw_ue_temp) > 170:
+                        yaw_ue_abs = -yaw_ue_abs
+
+                # save yaw angle for filter
+                yaw_ue_temp = yaw_ue_abs
+
+                # Make the pose relative to its starting position
+                x_ue_abs = x_ue_abs - x_ue_init
+                y_ue_abs = y_ue_abs - y_ue_init
+                z_ue_abs = z_ue_abs - z_ue_init
+                yaw_ue_abs = yaw_ue_abs - yaw_ue_init
+
+                # convert absolute left handed system into a relative left handed system
+                # it could be that I should change the angles as well.
+                yaw_start = int(round(yaw_ue_init))
+                if yaw_start == 0:
+                    x_ue_rel = x_ue_abs
+                    y_ue_rel = y_ue_abs
+                    z_ue_rel = z_ue_abs
+                    roll_ue_rel = roll_ue_abs
+                    pitch_ue_rel = pitch_ue_abs
+                    yaw_ue_rel = yaw_ue_abs
+                elif yaw_start == 180:
+                    x_ue_rel = -x_ue_abs
+                    y_ue_rel = -y_ue_abs
+                    z_ue_rel = z_ue_abs
+                    roll_ue_rel = roll_ue_abs
+                    pitch_ue_rel = pitch_ue_abs
+                    yaw_ue_rel = yaw_ue_abs
+                elif yaw_start == 90:
+                    x_ue_rel = y_ue_abs
+                    y_ue_rel = -x_ue_abs
+                    z_ue_rel = z_ue_abs
+                    roll_ue_rel = roll_ue_abs
+                    pitch_ue_rel = pitch_ue_abs
+                    yaw_ue_rel = yaw_ue_abs
+                elif yaw_start == -90:
+                    x_ue_rel = - y_ue_abs
+                    y_ue_rel = x_ue_abs
+                    z_ue_rel = z_ue_abs
+                    roll_ue_rel = roll_ue_abs
+                    pitch_ue_rel = pitch_ue_abs
+                    yaw_ue_rel = yaw_ue_abs
+                else:
+                    print("Starting point is not along one of the axis")
+                    exit()
+
+                # Convert relative left handed system to the right handed system used in ROS
+                x = x_ue_rel
+                y = - y_ue_rel
+                z = z_ue_rel
+                roll = -roll_ue_rel
+                pitch = pitch_ue_rel
+                yaw = - yaw_ue_rel
+
+                position = np.array([x, y, z])
+                orientation = np.array([roll, pitch, yaw])
+                self.positions.append(position)
                 self.orientations.append(orientation)
 
                 # convert euler angles to quaternions
@@ -97,7 +168,7 @@ class CarlaSlamEvaluate(object):
 
                 # Convert quaternion to homogeneous coordinates
                 # Note: NEVER GO FROM ROTATION MATRIX TO QUATERNIONS
-                # One rotation matrix has 2 quaternion values
+                # Since one rotation matrix has 2 quaternion values
                 q = tf.transformations.quaternion_matrix(quaternion)
                 q[0][3] = x
                 q[1][3] = y
@@ -144,7 +215,7 @@ class CarlaSlamEvaluate(object):
                 q3_new = -q2_orb
                 q4_new = q4_orb
                 # could have to do with what is thought as positive in a quaternion system.
-                
+
                 quaternion = [q1_new, q2_new, q3_new, q4_new]
                 self.quaternions.append(quaternion)
                 q = tf.transformations.quaternion_matrix(quaternion)
@@ -367,13 +438,13 @@ def evaluate_PSE(gt=CarlaSlamEvaluate, Slam=CarlaSlamEvaluate, time_step=float):
                     time2 = Slam.time[temp_index]
 
                 #  use this data to linear interpolate the position
-                position1 = np.asarray(Slam.position[time_index])
-                position2 = np.asarray(Slam.position[temp_index])
+                position1 = np.asarray(Slam.positions[time_index])
+                position2 = np.asarray(Slam.positions[temp_index])
                 position_inter = time_step*(position2 - position1)/(time2-time)+position1
 
                 # use Slerp technique to linear interpolate the rotations
-                q1 = Quaternion(Slam.quaternion[time_index])
-                q2 = Quaternion(Slam.quaternion[temp_index])
+                q1 = Quaternion(Slam.quaternions[time_index])
+                q2 = Quaternion(Slam.quaternions[temp_index])
                 time_inter = time_step/(time2-time)
                 q = Quaternion.slerp(q1, q2, time_inter)
                 q_inter = [q[0], q[1], q[2], q[3]]
@@ -448,21 +519,23 @@ def evaluate_PSE(gt=CarlaSlamEvaluate, Slam=CarlaSlamEvaluate, time_step=float):
 def main():
 
     method_gt = "gt"
-    gt_file = "/home/sietse/NV_30_SV_1_gt.txt"
+    gt_file = "/home/sietse/carla_experiment_data/orientation_test/SL_6_NV_30_SV_1_gt.txt"
     with CarlaSlamEvaluate(method_gt, gt_file) as gt_data:
         gt_data.process_data()
 
     method_orb = "orb"
-    orb_file = "/home/sietse/NV_30_SV_1_orb.txt"
+    orb_file = "/home/sietse/carla_experiment_data/orientation_test/SL_6_NV_30_SV_1_orb.txt"
     with CarlaSlamEvaluate(method_orb, orb_file) as orb_data:
         orb_data.process_data()
-
+    time_step = 1
     evaluate_objects = [gt_data, orb_data]
     compare_position(evaluate_objects)
     compare_quaternions(evaluate_objects)
     compare_euler_angles(evaluate_objects)
+    evaluate_pose_over_time([gt_data], [orb_data])
+    evaluate_PSE(gt_data, orb_data, time_step=time_step)
     plt.show()
 
-
+    print(gt_data.time)
 if __name__=="__main__":
     main()

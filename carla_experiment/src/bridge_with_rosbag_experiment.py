@@ -21,8 +21,8 @@ class CarlaRosBridgeWithBagExperiment(CarlaRosBridgeExperiment):
         NV = params.get('NumberOfVehicles', None)
         SV = params.get('SeedVehicles', None)
         home_user = os.path.expanduser('~')
-        filename = home_user + "/NV_{}_SV_{}.bag"
-        filename = filename.format(NV, SV)
+        filename = home_user + "/SL_{}_NV_{}_SV_{}.bag"
+        filename = filename.format(self.start, NV, SV)
         self.bag = rosbag.Bag(filename, mode='w')
 
     def send_msgs(self):
