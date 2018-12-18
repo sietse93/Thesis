@@ -95,10 +95,10 @@ class CarlaSlamEvaluate(object):
                         sign = np.sign(yaw_ue_abs)
                         # if sign is positive, it originally came from -180
                         if sign > 0:
-                            yaw_ue_abs = -180-(180-abs(yaw_ue_abs))
+                            yaw_ue_abs = yaw_ue_rel - (180-abs(yaw_ue_abs))
                         # if sign is negative it came from 180
                         if sign < 0:
-                            yaw_ue_abs = 180 + (180-abs(yaw_ue_abs))
+                            yaw_ue_abs = yaw_ue_rel + (180-abs(yaw_ue_abs))
                     # if the vehicle starts at 180 degrees it will originally fluctuate between 179 and -179
                     elif abs(yaw_ue_abs - yaw_ue_temp) > 170:
                         yaw_ue_abs = -yaw_ue_abs
@@ -107,42 +107,33 @@ class CarlaSlamEvaluate(object):
                 yaw_ue_temp = yaw_ue_abs
 
                 # Make the pose relative to its starting position
-                x_ue_abs = x_ue_abs - x_ue_init
-                y_ue_abs = y_ue_abs - y_ue_init
-                z_ue_abs = z_ue_abs - z_ue_init
-                yaw_ue_abs = yaw_ue_abs - yaw_ue_init
+                x_ue_0 = x_ue_abs - x_ue_init
+                y_ue_0 = y_ue_abs - y_ue_init
+                z_ue_0 = z_ue_abs - z_ue_init
+                yaw_ue_0 = yaw_ue_abs - yaw_ue_init
 
+                # Nothing changes with the Euler angles, except yaw.
+                roll_ue_rel = roll_ue_abs
+                pitch_ue_rel = pitch_ue_abs
+                yaw_ue_rel = yaw_ue_0
                 # convert absolute left handed system into a relative left handed system
-                # it could be that I should change the angles as well.
                 yaw_start = int(round(yaw_ue_init))
                 if yaw_start == 0:
-                    x_ue_rel = x_ue_abs
-                    y_ue_rel = y_ue_abs
-                    z_ue_rel = z_ue_abs
-                    roll_ue_rel = roll_ue_abs
-                    pitch_ue_rel = pitch_ue_abs
-                    yaw_ue_rel = yaw_ue_abs
+                    x_ue_rel = x_ue_0
+                    y_ue_rel = y_ue_0
+                    z_ue_rel = z_ue_0
                 elif yaw_start == 180:
-                    x_ue_rel = -x_ue_abs
-                    y_ue_rel = -y_ue_abs
-                    z_ue_rel = z_ue_abs
-                    roll_ue_rel = roll_ue_abs
-                    pitch_ue_rel = pitch_ue_abs
-                    yaw_ue_rel = yaw_ue_abs
+                    x_ue_rel = -x_ue_0
+                    y_ue_rel = -y_ue_0
+                    z_ue_rel = z_ue_0
                 elif yaw_start == 90:
-                    x_ue_rel = y_ue_abs
-                    y_ue_rel = -x_ue_abs
-                    z_ue_rel = z_ue_abs
-                    roll_ue_rel = roll_ue_abs
-                    pitch_ue_rel = pitch_ue_abs
-                    yaw_ue_rel = yaw_ue_abs
+                    x_ue_rel = y_ue_0
+                    y_ue_rel = -x_ue_0
+                    z_ue_rel = z_ue_0
                 elif yaw_start == -90:
-                    x_ue_rel = - y_ue_abs
-                    y_ue_rel = x_ue_abs
-                    z_ue_rel = z_ue_abs
-                    roll_ue_rel = roll_ue_abs
-                    pitch_ue_rel = pitch_ue_abs
-                    yaw_ue_rel = yaw_ue_abs
+                    x_ue_rel = - y_ue_0
+                    y_ue_rel = x_ue_0
+                    z_ue_rel = z_ue_0
                 else:
                     print("Starting point is not along one of the axis")
                     exit()
@@ -242,12 +233,18 @@ def compare_position(methods):
 
         plt.subplot(3, 1, 1)
         plt.plot(method.time, x, label=method.label)
+        plt.xlabel("time [s]")
+        plt.ylabel("x location [m]")
 
         plt.subplot(3, 1, 2)
         plt.plot(method.time, y, label=method.label)
+        plt.xlabel("time [s]")
+        plt.ylabel("y location [m]")
 
         plt.subplot(3, 1, 3)
         plt.plot(method.time, z, label=method.label)
+        plt.xlabel("time [s]")
+        plt.ylabel("z location [m]")
     plt.legend()
 
 
@@ -313,13 +310,13 @@ def evaluate_trajectory(GT, SLAM):
     plt.ylabel("y position")
 
     for gt in GT:
-        gt_x = [positions[0] for positions in gt.position]
-        gt_y = [positions[1] for positions in gt.position]
+        gt_x = [position[0] for position in gt.positions]
+        gt_y = [position[1] for position in gt.positions]
         plt.plot(gt_x, gt_y, label=gt.label)
 
     for Slam in SLAM:
-        Slam_x = [positions[0] for positions in Slam.position]
-        Slam_y = [positions[1] for positions in Slam.position]
+        Slam_x = [position[0] for position in Slam.positions]
+        Slam_y = [position[1] for position in Slam.positions]
         plt.plot(Slam_x, Slam_y, label=Slam.label)
 
     plt.legend()
@@ -472,7 +469,6 @@ def evaluate_PSE(gt=CarlaSlamEvaluate, Slam=CarlaSlamEvaluate, time_step=float):
             gt.timeQ1Q2.append(time)
             Q1Q2_gt_i_inv = np.linalg.inv(Q1Q2_gt_i)
             RPE_i = Q1Q2_gt_i_inv.dot(Q1Q2_i)
-            print(RPE_i)
             RPE.append(RPE_i)
 
     RPEx = [matrix[0][3] for matrix in RPE]
@@ -519,23 +515,23 @@ def evaluate_PSE(gt=CarlaSlamEvaluate, Slam=CarlaSlamEvaluate, time_step=float):
 def main():
 
     method_gt = "gt"
-    gt_file = "/home/sietse/carla_experiment_data/orientation_test/SL_6_NV_30_SV_1_gt.txt"
+    gt_file = "/home/sietse/carla_experiment_data/dynamic_loopclosed_gt.txt"
     with CarlaSlamEvaluate(method_gt, gt_file) as gt_data:
         gt_data.process_data()
 
     method_orb = "orb"
-    orb_file = "/home/sietse/carla_experiment_data/orientation_test/SL_6_NV_30_SV_1_orb.txt"
+    orb_file = "/home/sietse/carla_experiment_data/dynamic_loopclosed_orb.txt"
     with CarlaSlamEvaluate(method_orb, orb_file) as orb_data:
         orb_data.process_data()
     time_step = 1
     evaluate_objects = [gt_data, orb_data]
-    compare_position(evaluate_objects)
-    compare_quaternions(evaluate_objects)
+    # compare_position(evaluate_objects)
+    # compare_quaternions(evaluate_objects)
     compare_euler_angles(evaluate_objects)
-    evaluate_pose_over_time([gt_data], [orb_data])
-    evaluate_PSE(gt_data, orb_data, time_step=time_step)
+    # evaluate_trajectory([gt_data], [orb_data])
+    #evaluate_pose_over_time([gt_data], [orb_data])
+    #evaluate_PSE(gt_data, orb_data, time_step=time_step)
     plt.show()
 
-    print(gt_data.time)
 if __name__=="__main__":
     main()
