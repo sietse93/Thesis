@@ -67,7 +67,7 @@ class CarlaSlamEvaluate(object):
                 float_line = [float(element) for element in line]
 
                 # convert time from [ms] to [s]
-                time = round(float_line[0]*10**(-3),2)
+                time = round(float_line[0]*10**(-3), 2)
                 self.time.append(time)
 
                 # groundtruth is absolute position in unreal engine coordinate system
@@ -80,31 +80,21 @@ class CarlaSlamEvaluate(object):
                 pitch_ue_abs = float_line[5]
                 yaw_ue_abs = float_line[6]
 
+                # This filters fluctuations when the vehicle is stationairy at a yaw angle around 180, -180
+                # It compares the yaw angle with the previous yaw angle
+                # if index is not 0:
+                #     if abs(yaw_ue_abs - yaw_ue_temp) > 178:
+                #         yaw_ue_abs = -yaw_ue_abs
+
+                # Save yaw angle for filter
+                # yaw_ue_temp = yaw_ue_abs
+
                 # Make sure that vehicle starts at 0
                 if index == 0:
                     x_ue_init = x_ue_abs
                     y_ue_init = y_ue_abs
                     z_ue_init = z_ue_abs
                     yaw_ue_init = yaw_ue_abs
-
-                # UE measures the angle up until 180 degrees. Meaning 182 degrees == -178 degrees
-                # If the vehicle has turned already, so yaw_relative > 90 degrees
-                # the absolute value should be bigger than 180 degrees (positive and negative)
-                else:
-                    if abs(yaw_ue_rel) > 89 and abs(yaw_ue_abs-yaw_ue_temp) > 170:
-                        sign = np.sign(yaw_ue_abs)
-                        # if sign is positive, it originally came from -180
-                        if sign > 0:
-                            yaw_ue_abs = yaw_ue_rel - (180-abs(yaw_ue_abs))
-                        # if sign is negative it came from 180
-                        if sign < 0:
-                            yaw_ue_abs = yaw_ue_rel + (180-abs(yaw_ue_abs))
-                    # if the vehicle starts at 180 degrees it will originally fluctuate between 179 and -179
-                    elif abs(yaw_ue_abs - yaw_ue_temp) > 170:
-                        yaw_ue_abs = -yaw_ue_abs
-
-                # save yaw angle for filter
-                yaw_ue_temp = yaw_ue_abs
 
                 # Make the pose relative to its starting position
                 x_ue_0 = x_ue_abs - x_ue_init
@@ -116,7 +106,9 @@ class CarlaSlamEvaluate(object):
                 roll_ue_rel = roll_ue_abs
                 pitch_ue_rel = pitch_ue_abs
                 yaw_ue_rel = yaw_ue_0
+
                 # convert absolute left handed system into a relative left handed system
+                # I should probably use rotation matrices for this
                 yaw_start = int(round(yaw_ue_init))
                 if yaw_start == 0:
                     x_ue_rel = x_ue_0
@@ -137,6 +129,26 @@ class CarlaSlamEvaluate(object):
                 else:
                     print("Starting point is not along one of the axis")
                     exit()
+
+                # UE measures the angle up until 180 degrees. Meaning 182 degrees == -178 degrees
+                # If the vehicle has turned already, so yaw_relative > 90 degrees
+                # the absolute value should be bigger than 180 degrees (positive and negative)
+
+
+                # if index is not 0:
+                #     if abs(yaw_ue_rel) > 89 and abs(yaw_ue_abs-yaw_ue_temp) > 170:
+                #         sign = np.sign(yaw_ue_abs)
+                #         # if sign is positive, it originally came from -180
+                #         if sign > 0:
+                #             yaw_ue_abs = yaw_ue_rel - (180-abs(yaw_ue_abs))
+                #         # if sign is negative it came from 180
+                #         if sign < 0:
+                #             yaw_ue_abs = yaw_ue_rel + (180-abs(yaw_ue_abs))
+                #     # if the vehicle starts at 180 degrees it will originally fluctuate between 179 and -179
+                #     elif abs(yaw_ue_abs - yaw_ue_temp) > 170:
+                #         yaw_ue_abs = -yaw_ue_abs
+                #
+
 
                 # Convert relative left handed system to the right handed system used in ROS
                 x = x_ue_rel
@@ -529,7 +541,7 @@ def main():
     # compare_quaternions(evaluate_objects)
     compare_euler_angles(evaluate_objects)
     # evaluate_trajectory([gt_data], [orb_data])
-    #evaluate_pose_over_time([gt_data], [orb_data])
+    # evaluate_pose_over_time([gt_data], [orb_data])
     #evaluate_PSE(gt_data, orb_data, time_step=time_step)
     plt.show()
 
