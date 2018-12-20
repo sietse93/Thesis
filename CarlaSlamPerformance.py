@@ -58,10 +58,16 @@ class CarlaSlamEvaluate(object):
     def process_data(self):
         """ Makes an object of .txt pose data """
 
-        # index is to determine if this is the first data point
-        index = 0
-        for line_data in self.data:
-            if self.method == "gt":
+        if self.method == "gt":
+
+            # pose variables that come from the groundtruth txt file
+            x_ue_abs = []
+            y_ue_abs = []
+            z_ue_abs = []
+            roll_ue_abs = []
+            pitch_ue_abs = []
+            yaw_ue_abs180 = []
+            for line_data in self.data:
                 # Groundtruth is seperated by a space
                 line = line_data.split(" ")
                 float_line = [float(element) for element in line]
@@ -73,38 +79,37 @@ class CarlaSlamEvaluate(object):
                 # groundtruth is absolute position in unreal engine coordinate system
                 # left handed coordinate system
                 # orientation is in degrees
-                x_ue_abs = float_line[1]
-                y_ue_abs = float_line[2]
-                z_ue_abs = float_line[3]
-                roll_ue_abs = float_line[4]
-                pitch_ue_abs = float_line[5]
-                yaw_ue_abs = float_line[6]
+                x_ue_abs.append(float_line[1])
+                y_ue_abs.append(float_line[2])
+                z_ue_abs.append(float_line[3])
+                roll_ue_abs.append(float_line[4])
+                pitch_ue_abs.append(float_line[5])
 
-                # This filters fluctuations when the vehicle is stationairy at a yaw angle around 180, -180
-                # It compares the yaw angle with the previous yaw angle
-                # if index is not 0:
-                #     if abs(yaw_ue_abs - yaw_ue_temp) > 178:
-                #         yaw_ue_abs = -yaw_ue_abs
+                # note: this yaw angle is between -180 and 180 in a left handed system
+                yaw_ue_abs180.append(float_line[6])
 
-                # Save yaw angle for filter
-                # yaw_ue_temp = yaw_ue_abs
+            # convert the yaw angle to an angle that goes beyond 180 degrees
+            yaw_ue_abs = abs_yaw_angle_conversion(yaw_ue_abs180)
 
+            # Input are the coordinates of the vehicle in an absolute left handed system, specified by UE
+            # Yaw angle is the absolute rotation measured from the UE axis system, which allows to specify full rotation
+            for index, time in enumerate(self.time):
                 # Make sure that vehicle starts at 0
                 if index == 0:
-                    x_ue_init = x_ue_abs
-                    y_ue_init = y_ue_abs
-                    z_ue_init = z_ue_abs
-                    yaw_ue_init = yaw_ue_abs
+                    x_ue_init = x_ue_abs[index]
+                    y_ue_init = y_ue_abs[index]
+                    z_ue_init = z_ue_abs[index]
+                    yaw_ue_init = yaw_ue_abs[index]
 
                 # Make the pose relative to its starting position
-                x_ue_0 = x_ue_abs - x_ue_init
-                y_ue_0 = y_ue_abs - y_ue_init
-                z_ue_0 = z_ue_abs - z_ue_init
-                yaw_ue_0 = yaw_ue_abs - yaw_ue_init
+                x_ue_0 = x_ue_abs[index] - x_ue_init
+                y_ue_0 = y_ue_abs[index] - y_ue_init
+                z_ue_0 = z_ue_abs[index] - z_ue_init
+                yaw_ue_0 = yaw_ue_abs[index] - yaw_ue_init
 
                 # Nothing changes with the Euler angles, except yaw.
-                roll_ue_rel = roll_ue_abs
-                pitch_ue_rel = pitch_ue_abs
+                roll_ue_rel = roll_ue_abs[index]
+                pitch_ue_rel = pitch_ue_abs[index]
                 yaw_ue_rel = yaw_ue_0
 
                 # convert absolute left handed system into a relative left handed system
@@ -129,26 +134,6 @@ class CarlaSlamEvaluate(object):
                 else:
                     print("Starting point is not along one of the axis")
                     exit()
-
-                # UE measures the angle up until 180 degrees. Meaning 182 degrees == -178 degrees
-                # If the vehicle has turned already, so yaw_relative > 90 degrees
-                # the absolute value should be bigger than 180 degrees (positive and negative)
-
-
-                # if index is not 0:
-                #     if abs(yaw_ue_rel) > 89 and abs(yaw_ue_abs-yaw_ue_temp) > 170:
-                #         sign = np.sign(yaw_ue_abs)
-                #         # if sign is positive, it originally came from -180
-                #         if sign > 0:
-                #             yaw_ue_abs = yaw_ue_rel - (180-abs(yaw_ue_abs))
-                #         # if sign is negative it came from 180
-                #         if sign < 0:
-                #             yaw_ue_abs = yaw_ue_rel + (180-abs(yaw_ue_abs))
-                #     # if the vehicle starts at 180 degrees it will originally fluctuate between 179 and -179
-                #     elif abs(yaw_ue_abs - yaw_ue_temp) > 170:
-                #         yaw_ue_abs = -yaw_ue_abs
-                #
-
 
                 # Convert relative left handed system to the right handed system used in ROS
                 x = x_ue_rel
@@ -177,9 +162,14 @@ class CarlaSlamEvaluate(object):
                 q[1][3] = y
                 q[2][3] = z
                 self.Q.append(q)
-                index = index + 1
 
-            if self.method == "orb":
+        if self.method == "orb":
+
+            # need to extract the Euler angles to convert yaw since it only indicates angle at +180, -180
+            roll_list = []
+            pitch_list = []
+            yaw_180_list = []
+            for line_data in self.data:
                 line = line_data.split(" ")
                 float_line = [float(element) for element in line]
 
@@ -227,10 +217,68 @@ class CarlaSlamEvaluate(object):
                 q[2][3] = z_new
                 self.Q.append(q)
 
-                roll, pitch, yaw = tf.transformations.euler_from_quaternion(quaternion, axes='sxyz')
-                orientation = np.array([roll, pitch, yaw])
-                orientation = np.degrees(orientation)
+                roll, pitch, yaw_180 = tf.transformations.euler_from_quaternion(quaternion, axes='sxyz')
+                roll_list.append(np.degrees(roll))
+                pitch_list.append(np.degrees(pitch))
+                yaw_180_list.append(np.degrees(yaw_180))
+
+            # convert yaw angle to an angle that can show more than 180 degrees
+            yaw_list = abs_yaw_angle_conversion(yaw_180_list)
+
+            # append the converted euler angles into the orientation attribute
+            for index, roll in enumerate(roll_list):
+                orientation = np.array([roll, pitch_list[index], yaw_list[index]])
                 self.orientations.append(orientation)
+
+
+def abs_yaw_angle_conversion(rel_yaw_angle):
+    """Function that converts a yaw angle that ranges from  -180 to 180 degrees, to a yaw angle that has infinite range
+    and indicates full rotations. Note that this function can be used for left and right handed axis system"""
+
+    yaw_abs = []
+    yaw_abs.append(rel_yaw_angle[0])
+
+    # n180 tracks the number of 180 degrees rotations and direction.
+    n180 = 0
+
+    # sign_modulo is the sign of the very first pose
+    # scratch that... second pose, first pose the angle can be zero for ORB SLAM. The method does nto work then.
+    sign_modulo = np.sign(rel_yaw_angle[1])
+
+    index = 1
+    index_limit = len(rel_yaw_angle)
+
+    debug_yaw = open("/home/sietse/debug_yaw.txt", "w")
+    while index != index_limit:
+        # finds the modulo of either 180 or -180
+        modulo_angle = rel_yaw_angle[index] % (sign_modulo*180)
+
+        if myround(rel_yaw_angle[index - 1]) == -180 and myround(rel_yaw_angle[index]) == 180:
+            n180 = n180 - 180
+
+        if myround(rel_yaw_angle[index - 1]) == 180 and myround(rel_yaw_angle[index]) == -180:
+            n180 = n180 + 180
+
+        if myround(rel_yaw_angle[index]) == 0 and np.sign(rel_yaw_angle[index - 1]) == -1 and np.sign(rel_yaw_angle[index]) == 1:
+            n180 = n180 + 180
+
+        if myround(rel_yaw_angle[index]) == 0 and np.sign(rel_yaw_angle[index - 1]) == 1 and np.sign(rel_yaw_angle[index]) == -1:
+            n180 = n180 - 180
+
+        yaw_abs_element = n180 + modulo_angle
+        yaw_abs.append(yaw_abs_element)
+        debug_yaw.write("{}     {}      {}  \n".format(index, rel_yaw_angle[index], yaw_abs_element))
+        index = index + 1
+
+    debug_yaw.close()
+    return yaw_abs
+
+
+# rounds the number to the nearest base, in this case 10
+# ORB has jumps that go from -175 to 175, which are not detected if the round() function is used
+def myround(x, base=10):
+    return int(round(x/base))*base
+
 
 
 def compare_position(methods):
@@ -535,7 +583,10 @@ def main():
     orb_file = "/home/sietse/carla_experiment_data/dynamic_loopclosed_orb.txt"
     with CarlaSlamEvaluate(method_orb, orb_file) as orb_data:
         orb_data.process_data()
-    time_step = 1
+    # time_step = 1
+
+
+    # evaluate_objects = [gt_data, orb_data]
     evaluate_objects = [gt_data, orb_data]
     # compare_position(evaluate_objects)
     # compare_quaternions(evaluate_objects)
