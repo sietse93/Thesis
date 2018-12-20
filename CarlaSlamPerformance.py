@@ -58,7 +58,7 @@ class CarlaSlamEvaluate(object):
     def process_data(self):
         """ Makes an object of .txt pose data """
 
-        # index is to determine if this is the first datapoint
+        # index is to determine if this is the first data point
         index = 0
         for line_data in self.data:
             if self.method == "gt":

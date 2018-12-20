@@ -39,6 +39,7 @@ for index, element in enumerate(yaw):
 
 # This is some if loop I thought of that is too complicated but might need revisiting if the other concept does not work
 # if abs(yaw_angle) > 178 and np.sign(yaw_angle) != np.sign(yaw_filter[index-1] and np.sign != np.sign(yaw_filter[index -2])):
+yaw_filter = yaw
 
 yaw_abs = []
 yaw_abs.append(yaw_filter[0])
