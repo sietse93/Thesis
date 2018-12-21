@@ -1,8 +1,0 @@
-<launch>
-  <arg name='rosbag_fname' default=''/>
-  <param name="rosbag_fname" value="/home/sietse/stereo_static.bag"/>
-  <rosparam file="$(find carla_experiment)/config/stereo_dynamic.yaml" command="load" />
-  <param name="carla_autopilot" type="boolean" value="True" />
-  <node pkg="carla_experiment" name="carla_client" type="client_experiment.py" output="screen"/>
-  <node pkg="carla_experiment" name="groundtruth_log" type="log_groundtruth.py" output="screen"/>
-</launch>

@@ -557,16 +557,22 @@ def evaluate_PSE(gt=CarlaSlamEvaluate, Slam=CarlaSlamEvaluate, time_step=float):
     plt.subplot(3, 1, 1)
     plt.plot(gt.timeQ1Q2, Q1Q2gtx, label=gt.method)
     plt.plot(Slam.timeQ1Q2, Q1Q2x, label=Slam.method)
+    plt.xlabel("Time [s]")
+    plt.ylabel("Change in pose aka longitudinal velocity  [m/s]")
     # plt.plot(time_debug, Q1Q2_debugx, 'o', label='linear interpolated')
 
     plt.subplot(3, 1, 2)
     plt.plot(gt.timeQ1Q2, Q1Q2gty, label=gt.method)
     plt.plot(Slam.timeQ1Q2, Q1Q2y, label=Slam.method)
+    plt.xlabel("Time [s]")
+    plt.ylabel("Change in pose aka lateral velocity  [m/s]")
     # plt.plot(time_debug, Q1Q2_debugy, 'o', label='linear interpolated')
 
     plt.subplot(3, 1, 3)
     plt.plot(gt.timeQ1Q2, Q1Q2gtz, label=gt.method)
     plt.plot(Slam.timeQ1Q2, Q1Q2z, label=Slam.method)
+    plt.xlabel("Time [s]")
+    plt.ylabel("Change in pose aka  velocity  [m/s]")
     # plt.plot(time_debug, Q1Q2_debugz, 'o', label='linear interpolated')
 
     plt.figure("RPE")
@@ -587,24 +593,24 @@ def evaluate_PSE(gt=CarlaSlamEvaluate, Slam=CarlaSlamEvaluate, time_step=float):
 def main():
 
     method_gt = "gt"
-    # gt_file = "/home/sietse/carla_experiment_data/dynamic_loopclosed_gt.txt"
-    gt_file = "/home/sietse/carla_experiment_data/orientation_test/SL_17_NV_30_SV_1_gt.txt"
+    gt_file = "/home/sietse/carla_experiment_data/dynamic_loopclosed_gt.txt"
+    # gt_file = "/home/sietse/carla_experiment_data/orientation_test/SL_17_NV_30_SV_1_gt.txt"
     with CarlaSlamEvaluate(method_gt, gt_file) as gt_data:
         gt_data.process_data()
 
     method_orb = "orb"
-    # orb_file = "/home/sietse/carla_experiment_data/dynamic_loopclosed_orb.txt"
-    orb_file = "/home/sietse/carla_experiment_data/orientation_test/SL_17_NV_30_SV_1_orb.txt"
+    orb_file = "/home/sietse/carla_experiment_data/dynamic_loopclosed_orb.txt"
+    # orb_file = "/home/sietse/carla_experiment_data/orientation_test/SL_17_NV_30_SV_1_orb.txt"
     with CarlaSlamEvaluate(method_orb, orb_file) as orb_data:
         orb_data.process_data()
     time_step = 1
 
 
-    # evaluate_objects = [gt_data, orb_data]
     evaluate_objects = [gt_data, orb_data]
-    # compare_position(evaluate_objects)
+    evaluate_objects = [gt_data, orb_data]
+    compare_position(evaluate_objects)
     compare_quaternions(evaluate_objects)
-    # compare_euler_angles(evaluate_objects)
+    compare_euler_angles(evaluate_objects)
     evaluate_trajectory([gt_data], [orb_data])
     evaluate_pose_over_time([gt_data], [orb_data])
     evaluate_PSE(gt_data, orb_data, time_step=time_step)
