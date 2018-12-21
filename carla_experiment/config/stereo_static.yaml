@@ -6,6 +6,8 @@ carla:
   SendNonPlayerAgentsInfo: True
   NumberOfVehicles: 0
   NumberOfPedestrians: 0
+  SeedVehicles: 1
+  SeedPedestrians: 1
   WeatherId: 1
 
   sensors:

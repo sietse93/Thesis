@@ -1,0 +1,6 @@
+<launch>
+  <rosparam file="$(find carla_experiment)/config/stereo_dynamic.yaml" command="load" />
+  <param name="log_gt" type="boolean" value="True" /> 
+  <param name="carla_autopilot" type="boolean" value="False" />
+  <node pkg="carla_experiment" name="carla_client" type="client_experiment.py" output="screen"/>
+</launch>
