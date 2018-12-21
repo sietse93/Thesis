@@ -104,6 +104,8 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
             # handle control: use logged control commands if autopilot is false
             else:
                 control = measurements.player_measurements.autopilot_control
+
+                # find the actual timestamp
                 time_index = self.log_control_gamestamp.index(self.carla_game_stamp)
                 control.steer = self.log_control_steer[time_index]
                 control.throttle = self.log_control_throttle[time_index]

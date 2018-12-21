@@ -4,7 +4,7 @@ carla:
   QualityLevel: Epic  # Low or Epic
   SynchronousMode: True
   SendNonPlayerAgentsInfo: True
-  NumberOfVehicles: 30
+  NumberOfVehicles: 40
   NumberOfPedestrians: 0
   WeatherId: 1
   SeedVehicles: 1
