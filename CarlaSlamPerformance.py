@@ -151,13 +151,19 @@ class CarlaSlamEvaluate(object):
                 # convert euler angles to quaternions
                 # rotation order: static axis, roll, pitch, yaw
                 # could be that there are change in sign in these quaternions
-                quaternion = tf.transformations.quaternion_from_euler(roll, pitch, yaw, axes='sxyz')
+                quaternion = tf.transformations.quaternion_from_euler(math.radians(roll), math.radians(pitch), math.radians(yaw), axes='sxyz')
                 self.quaternions.append(quaternion)
 
                 # Convert quaternion to homogeneous coordinates
                 # Note: NEVER GO FROM ROTATION MATRIX TO QUATERNIONS
                 # Since one rotation matrix has 2 quaternion values
-                q = tf.transformations.quaternion_matrix(quaternion)
+                # q = tf.transformations.quaternion_matrix(quaternion)
+                # q[0][3] = x
+                # q[1][3] = y
+                # q[2][3] = z
+
+                # lets try to get the rotation matrix from the Euler angles
+                q = tf.transformations.euler_matrix(math.radians(roll), math.radians(pitch), math.radians(yaw), axes='sxyz')
                 q[0][3] = x
                 q[1][3] = y
                 q[2][3] = z
@@ -202,12 +208,11 @@ class CarlaSlamEvaluate(object):
                 # q3_new = -q2_orb
                 # q4_new = q4_orb
 
-                # What actually gives good results
+                # What actually gives good results, (before the yaw angle outputted full rotations)
                 q1_new = -q3_orb
                 q2_new = q1_orb
                 q3_new = -q2_orb
                 q4_new = q4_orb
-                # could have to do with what is thought as positive in a quaternion system.
 
                 quaternion = [q1_new, q2_new, q3_new, q4_new]
                 self.quaternions.append(quaternion)
@@ -379,6 +384,7 @@ def evaluate_trajectory(GT, SLAM):
         Slam_y = [position[1] for position in Slam.positions]
         plt.plot(Slam_x, Slam_y, label=Slam.label)
 
+    plt.plot(gt.positions[0][0], gt.positions[0][1], 'x', label="starting point")
     plt.legend()
 
 
@@ -566,34 +572,42 @@ def evaluate_PSE(gt=CarlaSlamEvaluate, Slam=CarlaSlamEvaluate, time_step=float):
     plt.figure("RPE")
     plt.subplot(3, 1, 1)
     plt.plot(Slam.timeQ1Q2, RPEx)
+    plt.xlabel("time [s]")
+    plt.ylabel("RPE x [m]")
     plt.subplot(3, 1, 2)
     plt.plot(Slam.timeQ1Q2, RPEy)
+    plt.xlabel("time [s]")
+    plt.ylabel("RPE y [m]")
     plt.subplot(3, 1, 3)
     plt.plot(Slam.timeQ1Q2, RPEz)
+    plt.xlabel("time [s]")
+    plt.ylabel("RPE z [m]")
 
 
 def main():
 
     method_gt = "gt"
-    gt_file = "/home/sietse/carla_experiment_data/dynamic_loopclosed_gt.txt"
+    # gt_file = "/home/sietse/carla_experiment_data/dynamic_loopclosed_gt.txt"
+    gt_file = "/home/sietse/carla_experiment_data/orientation_test/SL_17_NV_30_SV_1_gt.txt"
     with CarlaSlamEvaluate(method_gt, gt_file) as gt_data:
         gt_data.process_data()
 
     method_orb = "orb"
-    orb_file = "/home/sietse/carla_experiment_data/dynamic_loopclosed_orb.txt"
+    # orb_file = "/home/sietse/carla_experiment_data/dynamic_loopclosed_orb.txt"
+    orb_file = "/home/sietse/carla_experiment_data/orientation_test/SL_17_NV_30_SV_1_orb.txt"
     with CarlaSlamEvaluate(method_orb, orb_file) as orb_data:
         orb_data.process_data()
-    # time_step = 1
+    time_step = 1
 
 
     # evaluate_objects = [gt_data, orb_data]
     evaluate_objects = [gt_data, orb_data]
     # compare_position(evaluate_objects)
-    # compare_quaternions(evaluate_objects)
-    compare_euler_angles(evaluate_objects)
-    # evaluate_trajectory([gt_data], [orb_data])
-    # evaluate_pose_over_time([gt_data], [orb_data])
-    #evaluate_PSE(gt_data, orb_data, time_step=time_step)
+    compare_quaternions(evaluate_objects)
+    # compare_euler_angles(evaluate_objects)
+    evaluate_trajectory([gt_data], [orb_data])
+    evaluate_pose_over_time([gt_data], [orb_data])
+    evaluate_PSE(gt_data, orb_data, time_step=time_step)
     plt.show()
 
 if __name__=="__main__":
