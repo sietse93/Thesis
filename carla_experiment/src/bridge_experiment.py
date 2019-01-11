@@ -30,6 +30,8 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
         self.log_control_steer = []
         self.log_control_throttle = []
         self.log_control_brake = []
+        self.log_control_hand_brake = []
+        self.log_control_reverse = []
 
         # This will contain the ground truth pose data
         self.gt_data = {}
@@ -63,11 +65,15 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
         if not rospy.get_param('carla_autopilot', True):
             for line_data in self.control_data:
                 line_list = line_data.split(" ")
-                floatLine = [float(element) for element in line_list[0:-1]]
+                floatLine = [float(element) for element in line_list[0:4]]
+                handbrake_reverse = [element for element in line_list[4:6]]
                 self.log_control_gamestamp.append(floatLine[0])
                 self.log_control_steer.append(floatLine[1])
                 self.log_control_throttle.append(floatLine[2])
                 self.log_control_brake.append(floatLine[3])
+                # Weird written I know, but now you convert the string "False" to a boolean
+                self.log_control_hand_brake.append("True" == handbrake_reverse[0])
+                self.log_control_reverse.append("True" == handbrake_reverse[1])
             rospy.loginfo(" control commands loaded ")
 
         while not (rospy.is_shutdown()):
@@ -94,10 +100,12 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
             # handle control: log control commands if autopilot is true
             if rospy.get_param('carla_autopilot', True):
                 control = measurements.player_measurements.autopilot_control
-                control_log_line = '{} {} {} {} \n'.format(self.carla_game_stamp,
+                control_log_line = '{} {} {} {} {} {}\n'.format(self.carla_game_stamp,
                                                                     control.steer,
                                                                     control.throttle,
-                                                                    control.brake)
+                                                                    control.brake,
+                                                                    control.hand_brake,
+                                                                    control.reverse)
                 self.control_data.write(control_log_line)
                 self.client.send_control(control)
 
@@ -110,11 +118,13 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
                 steer_control = self.log_control_steer[time_index]
                 throttle_control = self.log_control_throttle[time_index]
                 brake_control = self.log_control_brake[time_index]
+                hand_brake_control = self.log_control_hand_brake[time_index]
+                reverse_control = self.log_control_reverse[time_index]
                 self.client.send_control(steer=steer_control,
                                          throttle=throttle_control,
                                          brake=brake_control,
-                                         hand_brake=False,
-                                         reverse=False)
+                                         hand_brake=hand_brake_control,
+                                         reverse=reverse_control)
 
             # handle groundtruth logging:
             if rospy.get_param('log_gt', True):
