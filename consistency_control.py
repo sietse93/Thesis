@@ -1,6 +1,7 @@
 from CarlaSlamPerformance import CarlaSlamEvaluate, evaluate_trajectory, evaluate_pose_over_time
 from matplotlib import pyplot as plt
 import math
+import numpy
 
 
 def gt_consistency(dynamic, static):
@@ -39,13 +40,14 @@ def gt_consistency(dynamic, static):
     plt.plot(dynamic.time, error_mag)
     plt.xlabel("time [s]")
     plt.ylabel("magnitude error [m]")
-
+    notequal_traj_index = numpy.nonzero(error_mag)
+    print(dynamic.time[notequal_traj_index[0][0]])
 
 def main():
     method_gt = "gt"
-    gt_file1 = "/home/sietse/CheckApConsistency/10fps/SL_12_NV_40_SV_1_gt.txt"
+    gt_file1 = "/home/sietse/CheckApConsistency/40fps/SL_44_NV_40_SV_1_gt.txt"
     # gt_file1 = "/home/sietse/carla_experiment_data/closed_loop/SL_144_NV_0_SV_1_gt.txt"
-    gt_file2 = "/home/sietse/CheckApConsistency/10fps/SL_12_NV_0_SV_1_gt.txt"
+    gt_file2 = "/home/sietse/CheckApConsistency/40fps/SL_44_NV_0_SV_1_gt.txt"
 
     with CarlaSlamEvaluate(method_gt, gt_file1) as gt_dynamic:
         gt_dynamic.process_data()
@@ -57,6 +59,7 @@ def main():
     evaluate_pose_over_time([gt_dynamic], [gt_static])
     gt_consistency(gt_dynamic, gt_static)
     plt.show()
+
 
 
 if __name__ == "__main__":

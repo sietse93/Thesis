@@ -26,7 +26,7 @@ def main():
         rospy.loginfo("Connected")
 
         # Where should the car start
-        start_position = 12
+        start_position = 44
 
         # if the gt is logged, a bag file will be created.
         if rospy.get_param('log_gt', True):
