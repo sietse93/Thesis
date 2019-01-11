@@ -94,24 +94,27 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
             # handle control: log control commands if autopilot is true
             if rospy.get_param('carla_autopilot', True):
                 control = measurements.player_measurements.autopilot_control
-                self.client.send_control(control)
                 control_log_line = '{} {} {} {} \n'.format(self.carla_game_stamp,
                                                                     control.steer,
                                                                     control.throttle,
                                                                     control.brake)
                 self.control_data.write(control_log_line)
+                self.client.send_control(control)
 
             # handle control: use logged control commands if autopilot is false
             else:
-                control = measurements.player_measurements.autopilot_control
-
+                # use logged control if autopilot is false
                 # find the actual timestamp
                 time_index = self.log_control_gamestamp.index(self.carla_game_stamp)
-                control.steer = self.log_control_steer[time_index]
-                control.throttle = self.log_control_throttle[time_index]
-                control.brake = self.log_control_brake[time_index]
-                rospy.loginfo(control)
-                self.client.send_control(control)
+                rospy.loginfo("actual gamestamp = {}, logged gamestamp = {}".format(self.carla_game_stamp, self.log_control_gamestamp[time_index]))
+                steer_control = self.log_control_steer[time_index]
+                throttle_control = self.log_control_throttle[time_index]
+                brake_control = self.log_control_brake[time_index]
+                self.client.send_control(steer=steer_control,
+                                         throttle=throttle_control,
+                                         brake=brake_control,
+                                         hand_brake=False,
+                                         reverse=False)
 
             # handle groundtruth logging:
             if rospy.get_param('log_gt', True):

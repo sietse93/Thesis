@@ -367,24 +367,19 @@ def compare_euler_angles(methods):
     plt.legend()
 
 
-def evaluate_trajectory(GT, SLAM):
+def evaluate_trajectory(methods):
 
     plt.figure("Trajectory")
     plt.title('Trajectory')
     plt.xlabel("x position")
     plt.ylabel("y position")
 
-    for gt in GT:
-        gt_x = [position[0] for position in gt.positions]
-        gt_y = [position[1] for position in gt.positions]
-        plt.plot(gt_x, gt_y, label=gt.label)
+    for method in methods:
+        x = [position[0] for position in method.positions]
+        y = [position[1] for position in method.positions]
+        plt.plot(x, y, label=method.label)
+        plt.plot(method.positions[0][0], method.positions[0][1], 'x', label="starting point")
 
-    for Slam in SLAM:
-        Slam_x = [position[0] for position in Slam.positions]
-        Slam_y = [position[1] for position in Slam.positions]
-        plt.plot(Slam_x, Slam_y, label=Slam.label)
-
-    plt.plot(gt.positions[0][0], gt.positions[0][1], 'x', label="starting point")
     plt.legend()
 
 
@@ -411,15 +406,15 @@ def evaluate_pose_over_time(GT, SLAM):
 
     plt.subplot(3, 2, 2)
     plt.xlabel("time [s]")
-    plt.ylabel("roll [rad]")
+    plt.ylabel("roll [deg]")
 
     plt.subplot(3, 2, 4)
     plt.xlabel("time [s]")
-    plt.ylabel("pitch [rad]")
+    plt.ylabel("pitch [deg]")
 
     plt.subplot(3, 2, 6)
     plt.xlabel("time [s]")
-    plt.ylabel("yaw [rad]")
+    plt.ylabel("yaw [deg]")
 
     # plot all the groundtruths
     for gt in GT:
@@ -593,13 +588,15 @@ def evaluate_PSE(gt=CarlaSlamEvaluate, Slam=CarlaSlamEvaluate, time_step=float):
 def main():
 
     method_gt = "gt"
-    gt_file = "/home/sietse/carla_experiment_data/dynamic_loopclosed_gt.txt"
+
+    # gt_file = "/home/sietse/carla_experiment_data/dynamic_loopclosed_gt.txt"
     # gt_file = "/home/sietse/carla_experiment_data/orientation_test/SL_17_NV_30_SV_1_gt.txt"
+
     with CarlaSlamEvaluate(method_gt, gt_file) as gt_data:
         gt_data.process_data()
 
     method_orb = "orb"
-    orb_file = "/home/sietse/carla_experiment_data/dynamic_loopclosed_orb.txt"
+    # orb_file = "/home/sietse/carla_experiment_data/dynamic_loopclosed_orb.txt"
     # orb_file = "/home/sietse/carla_experiment_data/orientation_test/SL_17_NV_30_SV_1_orb.txt"
     with CarlaSlamEvaluate(method_orb, orb_file) as orb_data:
         orb_data.process_data()
@@ -607,11 +604,10 @@ def main():
 
 
     evaluate_objects = [gt_data, orb_data]
-    evaluate_objects = [gt_data, orb_data]
     compare_position(evaluate_objects)
     compare_quaternions(evaluate_objects)
     compare_euler_angles(evaluate_objects)
-    evaluate_trajectory([gt_data], [orb_data])
+    evaluate_trajectory(evaluate_objects)
     evaluate_pose_over_time([gt_data], [orb_data])
     evaluate_PSE(gt_data, orb_data, time_step=time_step)
     plt.show()
