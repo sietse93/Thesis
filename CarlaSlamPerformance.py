@@ -73,7 +73,7 @@ class CarlaSlamEvaluate(object):
                 float_line = [float(element) for element in line]
 
                 # convert time from [ms] to [s]
-                time = round(float_line[0]*10**(-3), 2)
+                time = round(float_line[0]*10**(-3), 4)
                 self.time.append(time)
 
                 # groundtruth is absolute position in unreal engine coordinate system
@@ -589,27 +589,34 @@ def main():
 
     method_gt = "gt"
 
-    # gt_file = "/home/sietse/carla_experiment_data/dynamic_loopclosed_gt.txt"
-    # gt_file = "/home/sietse/carla_experiment_data/orientation_test/SL_17_NV_30_SV_1_gt.txt"
+    gt_file_static = "/home/sietse/SL_58_NV_0_SV_1_gt.txt"
+    gt_file_dynamic = "/home/sietse/SL_58_NV_40_SV_1_gt.txt"
 
-    with CarlaSlamEvaluate(method_gt, gt_file) as gt_data:
-        gt_data.process_data()
+    with CarlaSlamEvaluate(method_gt, gt_file_static) as gt_static:
+        gt_static.process_data()
+
+    with CarlaSlamEvaluate(method_gt, gt_file_dynamic) as gt_dynamic:
+        gt_dynamic.process_data()
 
     method_orb = "orb"
-    # orb_file = "/home/sietse/carla_experiment_data/dynamic_loopclosed_orb.txt"
-    # orb_file = "/home/sietse/carla_experiment_data/orientation_test/SL_17_NV_30_SV_1_orb.txt"
-    with CarlaSlamEvaluate(method_orb, orb_file) as orb_data:
-        orb_data.process_data()
+    orb_file_static = "/home/sietse/SL_58_NV_0_SV_1_orb.txt"
+    orb_file_dynamic = "/home/sietse/SL_58_NV_40_SV_1_orb.txt"
+
+    with CarlaSlamEvaluate(method_orb, orb_file_static) as orb_static:
+        orb_static.process_data()
+
+    with CarlaSlamEvaluate(method_orb, orb_file_dynamic) as orb_dynamic:
+        orb_dynamic.process_data()
+
     time_step = 1
 
-
-    evaluate_objects = [gt_data, orb_data]
-    compare_position(evaluate_objects)
-    compare_quaternions(evaluate_objects)
-    compare_euler_angles(evaluate_objects)
+    evaluate_objects = [gt_static, orb_static]
+    # compare_position(evaluate_objects)
+    # compare_quaternions(evaluate_objects)
+    # compare_euler_angles(evaluate_objects)
     evaluate_trajectory(evaluate_objects)
-    evaluate_pose_over_time([gt_data], [orb_data])
-    evaluate_PSE(gt_data, orb_data, time_step=time_step)
+    evaluate_pose_over_time([gt_static], [orb_static])
+    evaluate_PSE(gt_static, orb_static, time_step=time_step)
     plt.show()
 
 
