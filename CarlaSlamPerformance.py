@@ -5,6 +5,7 @@ from matplotlib import pyplot as plt
 import tf
 from pyquaternion import Quaternion
 import math
+import os
 
 
 class CarlaSlamEvaluate(object):
@@ -47,8 +48,9 @@ class CarlaSlamEvaluate(object):
     def __enter__(self):
         self.data = open(self.flocation, "r")
         # This should label the object to the file name which should be descriptive enough
-        # Removes "/home/sietse/carla_experiment" from string (35 char long)
-        self.label = self.flocation[35:]
+        # Removes "/home/sietse" from string
+        home_user = os.path.expanduser('~')
+        self.label = self.flocation.replace(home_user + "/", "", 1)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -583,6 +585,7 @@ def evaluate_PSE(gt=CarlaSlamEvaluate, Slam=CarlaSlamEvaluate, time_step=float):
     plt.plot(Slam.timeQ1Q2, RPEz)
     plt.xlabel("time [s]")
     plt.ylabel("RPE z [m]")
+    plt.legend()
 
 
 def main():
