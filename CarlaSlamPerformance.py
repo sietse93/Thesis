@@ -48,9 +48,11 @@ class CarlaSlamEvaluate(object):
     def __enter__(self):
         self.data = open(self.flocation, "r")
         # This should label the object to the file name which should be descriptive enough
-        # Removes "/home/sietse" from string
-        home_user = os.path.expanduser('~')
-        self.label = self.flocation.replace(home_user + "/", "", 1)
+        # index where "SL" starts
+        index_start = self.flocation.find("SL")
+
+        # label = NameOfMethod_SL_{}_NV_{}
+        self.label = self.method + "_" + self.flocation[index_start:(index_start+11)]
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -571,6 +573,7 @@ def evaluate_PSE(gt=CarlaSlamEvaluate, Slam=CarlaSlamEvaluate, time_step=float):
     plt.xlabel("Time [s]")
     plt.ylabel("Change in pose aka  velocity  [m/s]")
     # plt.plot(time_debug, Q1Q2_debugz, 'o', label='linear interpolated')
+    plt.legend()
 
     plt.figure("RPE")
     plt.subplot(3, 1, 1)
@@ -618,7 +621,7 @@ def main():
     # compare_quaternions(evaluate_objects)
     # compare_euler_angles(evaluate_objects)
     evaluate_trajectory(evaluate_objects)
-    evaluate_pose_over_time([gt_static], [orb_static])
+    evaluate_pose_over_time([gt_static], [orb_static, orb_dynamic])
     evaluate_PSE(gt_static, orb_static, time_step=time_step)
     plt.show()
 
