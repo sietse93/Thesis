@@ -49,7 +49,8 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
             SynchronousMode=params.get('SynchronousMode', True),
             QualityLevel=params.get('QualityLevel', 'Low'),
             SeedVehicles=params.get('SeedVehicles', 123456789),
-            SeedPedestrians=params.get('SeedPedestrians', 123456789)
+            SeedPedestrians=params.get('SeedPedestrians', 123456789),
+            DisableTwoWheeledVehicles=params.get('DisableTwoWheeledVehicles', True)
         )
 
     def run(self):
