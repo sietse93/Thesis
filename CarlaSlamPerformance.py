@@ -477,118 +477,125 @@ def evaluate_pose_over_time(GT, SLAM):
     plt.legend()
 
 
-def evaluate_PSE(gt=CarlaSlamEvaluate, Slam=CarlaSlamEvaluate, time_step=float):
-    RPE = []
-    time_debug = []
-    Q1Q2_debug = []
+# def evaluate_PSE(gt=CarlaSlamEvaluate, Slam=CarlaSlamEvaluate, time_step=float):
+def evaluate_PSE(GT, SLAM, time_step=float):
+    """Input a list of CarlaSlamEvaluate ground truths and a list of CarlaSlamEvaluate SLAM pose estimations"""
+    if len(GT) != len(SLAM):
+        print("Not every SLAM method has a ground truth")
+        return
 
-    for time in Slam.time:
-        if time > 2 and time < (Slam.time[-1]-time_step):
-            time_index = Slam.time.index(time)
-            Q1 = Slam.Q[time_index]
-            Q1_inv = np.linalg.inv(Q1)
+    for gt, Slam in zip(GT, SLAM):
+        RPE = []
+        time_debug = []
+        Q1Q2_debug = []
 
-            try:
-                Q2 = Slam.Q[Slam.time.index(time+time_step)]  # add time_step if it doesnt exist it gets a ValueError
+        for time in Slam.time:
+            if time > 2 and time < (Slam.time[-1]-time_step):
+                time_index = Slam.time.index(time)
+                Q1 = Slam.Q[time_index]
+                Q1_inv = np.linalg.inv(Q1)
 
-            except ValueError:
-                # if time step does not work, find the closest timestamp that is bigger than the time step
-                temp_index = time_index+1
-                time2 = Slam.time[temp_index]
-                while time2 < time + 1:
-                    temp_index = temp_index + 1
+                try:
+                    Q2 = Slam.Q[Slam.time.index(time+time_step)]  # add time_step if it doesnt exist it gets a ValueError
+
+                except ValueError:
+                    # if time step does not work, find the closest timestamp that is bigger than the time step
+                    temp_index = time_index+1
                     time2 = Slam.time[temp_index]
+                    while time2 < time + 1:
+                        temp_index = temp_index + 1
+                        time2 = Slam.time[temp_index]
 
-                #  use this data to linear interpolate the position
-                position1 = np.asarray(Slam.positions[time_index])
-                position2 = np.asarray(Slam.positions[temp_index])
-                position_inter = time_step*(position2 - position1)/(time2-time)+position1
+                    #  use this data to linear interpolate the position
+                    position1 = np.asarray(Slam.positions[time_index])
+                    position2 = np.asarray(Slam.positions[temp_index])
+                    position_inter = time_step*(position2 - position1)/(time2-time)+position1
 
-                # use Slerp technique to linear interpolate the rotations
-                q1 = Quaternion(Slam.quaternions[time_index])
-                q2 = Quaternion(Slam.quaternions[temp_index])
-                time_inter = time_step/(time2-time)
-                q = Quaternion.slerp(q1, q2, time_inter)
-                q_inter = [q[0], q[1], q[2], q[3]]
-                Q2 = tf.transformations.quaternion_matrix(q_inter)
-                Q2[0][3] = position_inter[0]
-                Q2[1][3] = position_inter[1]
-                Q2[2][3] = position_inter[2]
+                    # use Slerp technique to linear interpolate the rotations
+                    q1 = Quaternion(Slam.quaternions[time_index])
+                    q2 = Quaternion(Slam.quaternions[temp_index])
+                    time_inter = time_step/(time2-time)
+                    q = Quaternion.slerp(q1, q2, time_inter)
+                    q_inter = [q[0], q[1], q[2], q[3]]
+                    Q2 = tf.transformations.quaternion_matrix(q_inter)
+                    Q2[0][3] = position_inter[0]
+                    Q2[1][3] = position_inter[1]
+                    Q2[2][3] = position_inter[2]
 
-                # some debug variables that allows you to visualize the linear interpolated data
-                time_debug.append(time)
-                Q1Q2_debug.append(Q1_inv.dot(Q2))
+                    # some debug variables that allows you to visualize the linear interpolated data
+                    time_debug.append(time)
+                    Q1Q2_debug.append(Q1_inv.dot(Q2))
 
-            Q1Q2_i = Q1_inv.dot(Q2)
-            Slam.Q1Q2.append(Q1Q2_i)
-            Slam.timeQ1Q2.append(time)
+                Q1Q2_i = Q1_inv.dot(Q2)
+                Slam.Q1Q2.append(Q1Q2_i)
+                Slam.timeQ1Q2.append(time)
 
-            # get equivalent gt time index
+                # get equivalent gt time index
 
-            gt_index = gt.time.index(time)
-            Q1_gt = gt.Q[gt_index]
-            Q1_gt_inv = np.linalg.inv(Q1_gt)
-            Q2_gt = gt.Q[gt.time.index(time + time_step)]
-            Q1Q2_gt_i = Q1_gt_inv.dot(Q2_gt)
-            gt.Q1Q2.append(Q1Q2_gt_i)
-            gt.timeQ1Q2.append(time)
-            Q1Q2_gt_i_inv = np.linalg.inv(Q1Q2_gt_i)
-            RPE_i = Q1Q2_gt_i_inv.dot(Q1Q2_i)
-            RPE.append(RPE_i)
+                gt_index = gt.time.index(time)
+                Q1_gt = gt.Q[gt_index]
+                Q1_gt_inv = np.linalg.inv(Q1_gt)
+                Q2_gt = gt.Q[gt.time.index(time + time_step)]
+                Q1Q2_gt_i = Q1_gt_inv.dot(Q2_gt)
+                gt.Q1Q2.append(Q1Q2_gt_i)
+                gt.timeQ1Q2.append(time)
+                Q1Q2_gt_i_inv = np.linalg.inv(Q1Q2_gt_i)
+                RPE_i = Q1Q2_gt_i_inv.dot(Q1Q2_i)
+                RPE.append(RPE_i)
 
-    RPEx = [matrix[0][3] for matrix in RPE]
-    RPEy = [matrix[1][3] for matrix in RPE]
-    RPEz = [matrix[2][3] for matrix in RPE]
+        RPEx = [matrix[0][3] for matrix in RPE]
+        RPEy = [matrix[1][3] for matrix in RPE]
+        RPEz = [matrix[2][3] for matrix in RPE]
 
-    Q1Q2x = [matrix[0][3] for matrix in Slam.Q1Q2]
-    Q1Q2y = [matrix[1][3] for matrix in Slam.Q1Q2]
-    Q1Q2z = [matrix[2][3] for matrix in Slam.Q1Q2]
+        Q1Q2x = [matrix[0][3] for matrix in Slam.Q1Q2]
+        Q1Q2y = [matrix[1][3] for matrix in Slam.Q1Q2]
+        Q1Q2z = [matrix[2][3] for matrix in Slam.Q1Q2]
 
-    Q1Q2gtx = [matrix[0][3] for matrix in gt.Q1Q2]
-    Q1Q2gty = [matrix[1][3] for matrix in gt.Q1Q2]
-    Q1Q2gtz = [matrix[2][3] for matrix in gt.Q1Q2]
+        Q1Q2gtx = [matrix[0][3] for matrix in gt.Q1Q2]
+        Q1Q2gty = [matrix[1][3] for matrix in gt.Q1Q2]
+        Q1Q2gtz = [matrix[2][3] for matrix in gt.Q1Q2]
 
-    Q1Q2_debugx = [matrix[0][3] for matrix in Q1Q2_debug]
-    Q1Q2_debugy = [matrix[1][3] for matrix in Q1Q2_debug]
-    Q1Q2_debugz = [matrix[2][3] for matrix in Q1Q2_debug]
+        Q1Q2_debugx = [matrix[0][3] for matrix in Q1Q2_debug]
+        Q1Q2_debugy = [matrix[1][3] for matrix in Q1Q2_debug]
+        Q1Q2_debugz = [matrix[2][3] for matrix in Q1Q2_debug]
 
-    plt.figure("Q1Q2")
-    plt.subplot(3, 1, 1)
-    plt.plot(gt.timeQ1Q2, Q1Q2gtx, label=gt.method)
-    plt.plot(Slam.timeQ1Q2, Q1Q2x, label=Slam.method)
-    plt.xlabel("Time [s]")
-    plt.ylabel("Change in pose aka longitudinal velocity  [m/s]")
-    # plt.plot(time_debug, Q1Q2_debugx, 'o', label='linear interpolated')
+        plt.figure("Q1Q2")
+        plt.subplot(3, 1, 1)
+        plt.plot(gt.timeQ1Q2, Q1Q2gtx, label=gt.label)
+        plt.plot(Slam.timeQ1Q2, Q1Q2x, label=Slam.label)
+        plt.xlabel("Time [s]")
+        plt.ylabel("Change in pose aka longitudinal velocity  [m/s]")
+        # plt.plot(time_debug, Q1Q2_debugx, 'o', label='linear interpolated')
 
-    plt.subplot(3, 1, 2)
-    plt.plot(gt.timeQ1Q2, Q1Q2gty, label=gt.method)
-    plt.plot(Slam.timeQ1Q2, Q1Q2y, label=Slam.method)
-    plt.xlabel("Time [s]")
-    plt.ylabel("Change in pose aka lateral velocity  [m/s]")
-    # plt.plot(time_debug, Q1Q2_debugy, 'o', label='linear interpolated')
+        plt.subplot(3, 1, 2)
+        plt.plot(gt.timeQ1Q2, Q1Q2gty, label=gt.label)
+        plt.plot(Slam.timeQ1Q2, Q1Q2y, label=Slam.label)
+        plt.xlabel("Time [s]")
+        plt.ylabel("Change in pose aka lateral velocity  [m/s]")
+        # plt.plot(time_debug, Q1Q2_debugy, 'o', label='linear interpolated')
 
-    plt.subplot(3, 1, 3)
-    plt.plot(gt.timeQ1Q2, Q1Q2gtz, label=gt.method)
-    plt.plot(Slam.timeQ1Q2, Q1Q2z, label=Slam.method)
-    plt.xlabel("Time [s]")
-    plt.ylabel("Change in pose aka  velocity  [m/s]")
-    # plt.plot(time_debug, Q1Q2_debugz, 'o', label='linear interpolated')
-    plt.legend()
+        plt.subplot(3, 1, 3)
+        plt.plot(gt.timeQ1Q2, Q1Q2gtz, label=gt.label)
+        plt.plot(Slam.timeQ1Q2, Q1Q2z, label=Slam.label)
+        plt.xlabel("Time [s]")
+        plt.ylabel("Change in pose aka  velocity  [m/s]")
+        # plt.plot(time_debug, Q1Q2_debugz, 'o', label='linear interpolated')
+        plt.legend()
 
-    plt.figure("RPE")
-    plt.subplot(3, 1, 1)
-    plt.plot(Slam.timeQ1Q2, RPEx)
-    plt.xlabel("time [s]")
-    plt.ylabel("RPE x [m]")
-    plt.subplot(3, 1, 2)
-    plt.plot(Slam.timeQ1Q2, RPEy)
-    plt.xlabel("time [s]")
-    plt.ylabel("RPE y [m]")
-    plt.subplot(3, 1, 3)
-    plt.plot(Slam.timeQ1Q2, RPEz)
-    plt.xlabel("time [s]")
-    plt.ylabel("RPE z [m]")
-    plt.legend()
+        plt.figure("RPE")
+        plt.subplot(3, 1, 1)
+        plt.plot(Slam.timeQ1Q2, RPEx, label=Slam.label)
+        plt.xlabel("time [s]")
+        plt.ylabel("RPE x [m]")
+        plt.subplot(3, 1, 2)
+        plt.plot(Slam.timeQ1Q2, RPEy, label=Slam.label)
+        plt.xlabel("time [s]")
+        plt.ylabel("RPE y [m]")
+        plt.subplot(3, 1, 3)
+        plt.plot(Slam.timeQ1Q2, RPEz, label=Slam.label)
+        plt.xlabel("time [s]")
+        plt.ylabel("RPE z [m]")
+        plt.legend()
 
 
 def main():
@@ -620,9 +627,9 @@ def main():
     # compare_position(evaluate_objects)
     # compare_quaternions(evaluate_objects)
     # compare_euler_angles(evaluate_objects)
-    evaluate_trajectory(evaluate_objects)
-    evaluate_pose_over_time([gt_static], [orb_static, orb_dynamic])
-    evaluate_PSE(gt_static, orb_static, time_step=time_step)
+    # evaluate_trajectory(evaluate_objects)
+    # evaluate_pose_over_time([gt_static], [orb_static, orb_dynamic])
+    evaluate_PSE([gt_static, gt_dynamic], [orb_static, orb_dynamic], time_step=time_step)
     plt.show()
 
 

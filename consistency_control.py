@@ -45,9 +45,8 @@ def gt_consistency(dynamic, static):
 
 def main():
     method_gt = "gt"
-    gt_file1 = "/home/sietse/CheckApConsistency/40fps/SL_44_NV_40_SV_1_gt.txt"
-    # gt_file1 = "/home/sietse/carla_experiment_data/closed_loop/SL_144_NV_0_SV_1_gt.txt"
-    gt_file2 = "/home/sietse/CheckApConsistency/40fps/SL_44_NV_0_SV_1_gt.txt"
+    gt_file1 = "/home/sietse/SL_58_NV_40_SV_1_gt.txt"
+    gt_file2 = "/home/sietse/SL_58_NV_0_SV_1_gt.txt"
 
     with CarlaSlamEvaluate(method_gt, gt_file1) as gt_dynamic:
         gt_dynamic.process_data()
