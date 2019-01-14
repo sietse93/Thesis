@@ -20,7 +20,7 @@ def gt_consistency(dynamic, static):
         error_mag.append(math.sqrt(e_x**2 + e_y**2 + e_z**2))
 
 
-    plt.figure()
+    plt.figure("Pose difference between static and dynamic")
     plt.subplot(3, 1, 1)
     plt.plot(dynamic.time, error_x)
     plt.xlabel("time [s]")
@@ -36,7 +36,7 @@ def gt_consistency(dynamic, static):
     plt.xlabel("time [s]")
     plt.ylabel("error in z [m]")
 
-    plt.figure()
+    plt.figure("Translational difference between static and dynamic")
     plt.plot(dynamic.time, error_mag)
     plt.xlabel("time [s]")
     plt.ylabel("magnitude error [m]")
@@ -54,8 +54,6 @@ def main():
     with CarlaSlamEvaluate(method_gt, gt_file2) as gt_static:
         gt_static.process_data()
 
-    evaluate_trajectory([gt_dynamic, gt_static])
-    evaluate_pose_over_time([gt_dynamic], [gt_static])
     gt_consistency(gt_dynamic, gt_static)
     plt.show()
 

@@ -292,7 +292,7 @@ def myround(x, base=10):
 def compare_position(methods):
     """plots the position of a list of CarlaSlamEvaluate objects"""
 
-    plt.figure()
+    plt.figure("Pose over time")
 
     for method in methods:
         x = [position[0] for position in method.positions]
@@ -660,11 +660,12 @@ def main():
 
     time_step = 1
 
-    evaluate_objects = [gt_static, orb_static]
+    gt_consistency(gt_dynamic, gt_static)
+    evaluate_objects = [gt_static, orb_static, orb_dynamic]
     compare_position(evaluate_objects)
     # compare_quaternions(evaluate_objects)
     compare_euler_angles(evaluate_objects)
-    # evaluate_trajectory(evaluate_objects)
+    evaluate_trajectory(evaluate_objects)
     # evaluate_pose_over_time([gt_static], [orb_static, orb_dynamic])
     evaluate_RPE([gt_static, gt_dynamic], [orb_static, orb_dynamic], time_step=time_step)
     plt.show()
