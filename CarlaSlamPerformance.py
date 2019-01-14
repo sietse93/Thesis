@@ -510,7 +510,7 @@ def evaluate_RPE(GT, SLAM, time_step=float):
                     # if time step does not work, find the closest timestamp that is bigger than the time step
                     temp_index = time_index+1
                     time2 = Slam.time[temp_index]
-                    while time2 < time + 1:
+                    while time2 < time + time_step:
                         temp_index = temp_index + 1
                         time2 = Slam.time[temp_index]
 
@@ -563,7 +563,8 @@ def evaluate_RPE(GT, SLAM, time_step=float):
                 b = RPE_i[1][1]  # pitch
                 c = RPE_i[2][2]  # yaw
                 d = 0.5*(a+b+c-1)
-                rot_err = math.acos(max(min(d, 1), -1))  # guarantees value between -1 and 1
+                rot_err = math.acos(d)
+                # rot_err = math.acos(max(min(d, 1), -1))  # guarantees value between -1 and 1
                 rot_errs.append(math.degrees(rot_err))
 
         RPEx = [matrix[0][3] for matrix in RPE]
@@ -582,28 +583,28 @@ def evaluate_RPE(GT, SLAM, time_step=float):
         Q1Q2_debugy = [matrix[1][3] for matrix in Q1Q2_debug]
         Q1Q2_debugz = [matrix[2][3] for matrix in Q1Q2_debug]
 
-        plt.figure("Q1Q2")
-        plt.subplot(3, 1, 1)
-        plt.plot(gt.timeQ1Q2, Q1Q2gtx, label=gt.label)
-        plt.plot(Slam.timeQ1Q2, Q1Q2x, label=Slam.label)
-        plt.xlabel("Time [s]")
-        plt.ylabel("Change in pose x [m]")
-        # plt.plot(time_debug, Q1Q2_debugx, 'o', label='linear interpolated')
-
-        plt.subplot(3, 1, 2)
-        plt.plot(gt.timeQ1Q2, Q1Q2gty, label=gt.label)
-        plt.plot(Slam.timeQ1Q2, Q1Q2y, label=Slam.label)
-        plt.xlabel("Time [s]")
-        plt.ylabel("Change in pose y [m]")
-        # plt.plot(time_debug, Q1Q2_debugy, 'o', label='linear interpolated')
-
-        plt.subplot(3, 1, 3)
-        plt.plot(gt.timeQ1Q2, Q1Q2gtz, label=gt.label)
-        plt.plot(Slam.timeQ1Q2, Q1Q2z, label=Slam.label)
-        plt.xlabel("Time [s]")
-        plt.ylabel("Change in pose z [m]")
-        # plt.plot(time_debug, Q1Q2_debugz, 'o', label='linear interpolated')
-        plt.legend()
+        # plt.figure("Q1Q2")
+        # plt.subplot(3, 1, 1)
+        # plt.plot(gt.timeQ1Q2, Q1Q2gtx, label=gt.label)
+        # plt.plot(Slam.timeQ1Q2, Q1Q2x, label=Slam.label)
+        # plt.xlabel("Time [s]")
+        # plt.ylabel("Change in pose x [m]")
+        # # plt.plot(time_debug, Q1Q2_debugx, 'o', label='linear interpolated')
+        #
+        # plt.subplot(3, 1, 2)
+        # plt.plot(gt.timeQ1Q2, Q1Q2gty, label=gt.label)
+        # plt.plot(Slam.timeQ1Q2, Q1Q2y, label=Slam.label)
+        # plt.xlabel("Time [s]")
+        # plt.ylabel("Change in pose y [m]")
+        # # plt.plot(time_debug, Q1Q2_debugy, 'o', label='linear interpolated')
+        #
+        # plt.subplot(3, 1, 3)
+        # plt.plot(gt.timeQ1Q2, Q1Q2gtz, label=gt.label)
+        # plt.plot(Slam.timeQ1Q2, Q1Q2z, label=Slam.label)
+        # plt.xlabel("Time [s]")
+        # plt.ylabel("Change in pose z [m]")
+        # # plt.plot(time_debug, Q1Q2_debugz, 'o', label='linear interpolated')
+        # plt.legend()
 
         plt.figure("RPE")
         plt.subplot(3, 1, 1)
@@ -629,7 +630,7 @@ def evaluate_RPE(GT, SLAM, time_step=float):
         plt.subplot(2, 1, 2)
         plt.plot(Slam.timeQ1Q2, rot_errs, label=Slam.label)
         plt.xlabel("time [s]")
-        plt.ylabel("rotational error [rad]")
+        plt.ylabel("rotational error [deg]")
         plt.legend()
 
 
