@@ -554,8 +554,8 @@ def evaluate_RPE(GT, SLAM, time_step=float):
                 RPE_i = Q1Q2_gt_i_inv.dot(Q1Q2_i)
                 RPE.append(RPE_i)
 
-                # calculate the magnitude of translational error
-                trans_err = math.sqrt(RPE_i[0][3]**2 + RPE_i[1][3]**2 + RPE_i[2][3]**2)
+                # calculate the magnitude of translational error, normalized to the time step
+                trans_err = math.sqrt(RPE_i[0][3]**2 + RPE_i[1][3]**2 + RPE_i[2][3]**2)/time_step
                 trans_errs.append(trans_err)
 
                 # calculate magnitude of angle
@@ -563,8 +563,8 @@ def evaluate_RPE(GT, SLAM, time_step=float):
                 b = RPE_i[1][1]  # pitch
                 c = RPE_i[2][2]  # yaw
                 d = 0.5*(a+b+c-1)
-                rot_err = math.acos(d)
-                # rot_err = math.acos(max(min(d, 1), -1))  # guarantees value between -1 and 1
+
+                rot_err = math.acos(max(min(d, 1), -1))/time_step  # guarantees value between -1 and 1
                 rot_errs.append(math.degrees(rot_err))
 
         RPEx = [matrix[0][3] for matrix in RPE]

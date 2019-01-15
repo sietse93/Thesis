@@ -28,21 +28,21 @@ def main():
     with CarlaSlamEvaluate(method_orb, orb_file_dynamic) as orb_dynamic:
         orb_dynamic.process_data()
 
-    time_step = 1
+    time_step = 10
 
     # Evaluate actual pose over time
-    evaluate_objects = [gt_static, orb_static]
+    evaluate_objects = [gt_static, orb_static, orb_dynamic]
     # evaluate_objects = [gt_static, orb_static, orb_static2]
     compare_position(evaluate_objects)
     compare_euler_angles(evaluate_objects)
     evaluate_trajectory(evaluate_objects)
 
     # Evaluate Relative Pose Error
-    evaluate_RPE([gt_static], [orb_static], time_step=time_step)
-    # evaluate_RPE([gt_static, gt_dynamic], [orb_static, orb_dynamic], time_step=time_step)
+    # evaluate_RPE([gt_static], [orb_static], time_step=time_step)
+    evaluate_RPE([gt_static, gt_dynamic], [orb_static, orb_dynamic], time_step=time_step)
 
     # Difference between the dynamic groundtruth and static groundtruth
-    # gt_consistency(gt_dynamic, gt_static)
+    gt_consistency(gt_dynamic, gt_static)
     plt.show()
 
 
