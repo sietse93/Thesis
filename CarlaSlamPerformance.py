@@ -381,7 +381,7 @@ def evaluate_trajectory(methods):
         x = [position[0] for position in method.positions]
         y = [position[1] for position in method.positions]
         plt.plot(x, y, label=method.label)
-        plt.plot(method.positions[0][0], method.positions[0][1], 'x', label="starting point")
+    plt.plot(methods[0].positions[0][0], methods[0].positions[0][1], 'x', label="starting point")
 
     plt.legend()
 
@@ -625,12 +625,12 @@ def evaluate_RPE(GT, SLAM, time_step=float):
         plt.subplot(2, 1, 1)
         plt.plot(Slam.timeQ1Q2, trans_errs, label=Slam.label)
         plt.xlabel("time [s]")
-        plt.ylabel("translational error [m]")
+        plt.ylabel("translational error [m/s]")
 
         plt.subplot(2, 1, 2)
         plt.plot(Slam.timeQ1Q2, rot_errs, label=Slam.label)
         plt.xlabel("time [s]")
-        plt.ylabel("rotational error [deg]")
+        plt.ylabel("rotational error [deg/s]")
         plt.legend()
 
 

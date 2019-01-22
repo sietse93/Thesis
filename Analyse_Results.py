@@ -28,7 +28,7 @@ def main():
     with CarlaSlamEvaluate(method_orb, orb_file_dynamic) as orb_dynamic:
         orb_dynamic.process_data()
 
-    time_step = 10
+    time_step = 2
 
     # Evaluate actual pose over time
     evaluate_objects = [gt_static, orb_static, orb_dynamic]
