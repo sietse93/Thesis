@@ -8,6 +8,7 @@ or autopilot off and using these logged controls.
 
 import rospy
 import os
+import math
 from rosgraph_msgs.msg import Clock
 from carla_ros_bridge.bridge import CarlaRosBridge
 from carla.settings import CarlaSettings
@@ -128,9 +129,9 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
                                          reverse=reverse_control)
 
             # handle groundtruth logging:
+            location = measurements.player_measurements.transform.location
+            rotation = measurements.player_measurements.transform.rotation
             if rospy.get_param('log_gt', True):
-                location = measurements.player_measurements.transform.location
-                rotation = measurements.player_measurements.transform.rotation
                 gt_log_line = "{} {} {} {} {} {} {}\n".format(measurements.game_timestamp,
                                                              location.x,
                                                              location.y,
@@ -139,6 +140,18 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
                                                              rotation.pitch,
                                                              rotation.yaw)
                 self.gt_data.write(gt_log_line)
+
+            # Compute distance travelled
+            try:
+                dx = location.x - prev_x
+                dy = location.y - prev_y
+                distance = distance + math.sqrt(dx**2 + dy**2)
+                rospy.loginfo(distance)
+            except UnboundLocalError:
+                distance = 0
+            prev_x = location.x
+            prev_y = location.y
+
 
     def __enter__(self):
         # Using this method so you don't use with .. as functions outside the while loop
@@ -164,7 +177,7 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
             self.control_data = open(home_user + "/control.txt", 'r')
             rospy.loginfo("Opened control file to read")
 
-        # # Log the groundtruth if the parameter is true
+        # Log the groundtruth if the parameter is true
         if rospy.get_param('log_gt', True):
             self.gt_data = open(filename + "_gt.txt", 'w')
             rospy.loginfo("Opened groundtruth file to write")
