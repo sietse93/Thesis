@@ -242,6 +242,7 @@ def main():
 
     plt.rcParams['axes.grid'] = True
 
+    # methods does not compute anything, it just plots
     methods = [gt_static, orb_static]
     GT = [gt_static]
     SLAM = [orb_static]
