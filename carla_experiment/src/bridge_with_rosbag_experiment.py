@@ -13,8 +13,8 @@ from bridge_experiment import CarlaRosBridgeExperiment
 
 
 class CarlaRosBridgeWithBagExperiment(CarlaRosBridgeExperiment):
-    def __init__(self, client, params, start_position, *args, **kwargs):
-        super(CarlaRosBridgeWithBagExperiment, self).__init__(client, params, start_position, *args, **kwargs)
+    def __init__(self, client, params, start_position, distance_experiment, *args, **kwargs):
+        super(CarlaRosBridgeWithBagExperiment, self).__init__(client, params, start_position, distance_experiment, *args, **kwargs)
 
         # Bag file is created in the users home directory
         # Automatic name generated based on Number of Vehicles and the Seed used

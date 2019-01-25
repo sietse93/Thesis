@@ -2,26 +2,31 @@
 RosBridge class for SLAM experiment
 
 Runs a Carla session either with the autopilot on and logging the control
-or autopilot off and using these logged controls.
+or autopilot off and using these logged controls. Session stops when specified
+distance is reached.
 
 """
 
 import rospy
 import os
 import math
+import sys
 from rosgraph_msgs.msg import Clock
 from carla_ros_bridge.bridge import CarlaRosBridge
 from carla.settings import CarlaSettings
 
 
 class CarlaRosBridgeExperiment(CarlaRosBridge):
-    def __init__(self, client, params, start_position):
+    def __init__(self, client, params, start_position, distance_experiment):
         # These parameters are needed for CarlaRosBridge
         CarlaRosBridge.__init__(self, client, params)
 
         # These are new properties for the experiment
         # Fixed starting position
         self.start = start_position
+
+        # Fix distance that should be traveled
+        self.dist_exp = distance_experiment
 
         # This will contain the control data which is either written or read
         self.control_data = {}
@@ -55,6 +60,7 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
         )
 
     def run(self):
+
         self.publishers['clock'] = rospy.Publisher(
             "clock", Clock, queue_size=10)
 
@@ -147,11 +153,15 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
                 dy = location.y - prev_y
                 distance = distance + math.sqrt(dx**2 + dy**2)
                 rospy.loginfo(distance)
+            # UnboundLocalError occurs when prev_x does not exist
             except UnboundLocalError:
                 distance = 0
             prev_x = location.x
             prev_y = location.y
 
+            # Stop experiment if the traveled distance is larger than the experiment distance
+            if distance >= self.dist_exp:
+                sys.exit()
 
     def __enter__(self):
         # Using this method so you don't use with .. as functions outside the while loop

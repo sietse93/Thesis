@@ -288,7 +288,6 @@ def myround(x, base=10):
     return int(round(x/base))*base
 
 
-
 def compare_position(methods):
     """plots the position of a list of CarlaSlamEvaluate objects"""
 
@@ -315,6 +314,45 @@ def compare_position(methods):
         plt.ylabel("z location [m]")
     plt.legend()
 
+
+def difference_positions(GT, SLAM):
+    """Plots the difference in position over time in the 3 axis"""
+
+    plt.figure("Difference Pose over time")
+
+    for gt, Slam in zip(GT, SLAM):
+        diff_x = []
+        diff_y = []
+        diff_z = []
+        time_used = []
+        for timestamp, position in zip(Slam.time, Slam.positions):
+            try:
+                eq_gt_index = gt.time.index(timestamp)
+                time_used.append(gt.time[eq_gt_index])
+                gt_position = gt.positions[eq_gt_index]
+                diff_x.append(gt_position[0]-position[0])
+                diff_y.append(gt_position[1] - position[1])
+                diff_z.append(gt_position[2] - position[2])
+            except ValueError:
+                continue
+
+        plt.grid(True)
+        plt.subplot(3,1,1)
+        plt.plot(time_used, diff_x, label=Slam.label)
+        plt.xlabel("time [s]")
+        plt.ylabel(" difference in x [m]")
+
+        plt.subplot(3,1,2)
+        plt.plot(time_used, diff_y, label=Slam.label)
+        plt.xlabel("time [s]")
+        plt.ylabel(" difference in y [m]")
+
+        plt.subplot(3,1,3)
+        plt.plot(time_used, diff_z, label=Slam.label)
+        plt.xlabel("time [s]")
+        plt.ylabel(" difference in z [m]")
+
+        plt.legend()
 
 def compare_quaternions(methods):
     """Plots the quaternions of a list of CarlaSlamEvaluate objects """
@@ -634,8 +672,6 @@ def evaluate_RPE(GT, SLAM, time_step=float):
         plt.legend()
 
 
-
-
 def main():
 
     method_gt = "gt"
@@ -660,15 +696,15 @@ def main():
         orb_dynamic.process_data()
 
     time_step = 1
-
-    gt_consistency(gt_dynamic, gt_static)
-    evaluate_objects = [gt_static, orb_static, orb_dynamic]
-    compare_position(evaluate_objects)
+    difference_positions([gt_dynamic], [orb_dynamic])
+    # gt_consistency(gt_dynamic, gt_static)
+    # evaluate_objects = [gt_static, orb_static, orb_dynamic]
+    # compare_position(evaluate_objects)
     # compare_quaternions(evaluate_objects)
-    compare_euler_angles(evaluate_objects)
-    evaluate_trajectory(evaluate_objects)
+    # compare_euler_angles(evaluate_objects)
+    # evaluate_trajectory(evaluate_objects)
     # evaluate_pose_over_time([gt_static], [orb_static, orb_dynamic])
-    evaluate_RPE([gt_static, gt_dynamic], [orb_static, orb_dynamic], time_step=time_step)
+    # evaluate_RPE([gt_static, gt_dynamic], [orb_static, orb_dynamic], time_step=time_step)
     plt.show()
 
 

@@ -28,15 +28,19 @@ def main():
         # Where should the car start
         start_position = 58
 
+        # What distance should the vehicle travel
+        distance_experiment = 50
+
         # if the gt is logged, a bag file will be created.
         if rospy.get_param('log_gt', True):
-            bridge_cls = CarlaRosBridgeWithBagExperiment(client=client, params=params, start_position=start_position)
+            bridge_cls = CarlaRosBridgeWithBagExperiment(client=client, params=params, start_position=start_position, distance_experiment=distance_experiment)
         else:
-            bridge_cls = CarlaRosBridgeExperiment(client=client, params=params, start_position=start_position)
+            bridge_cls = CarlaRosBridgeExperiment(client=client, params=params, start_position=start_position, distance_experiment=distance_experiment)
 
         with bridge_cls as carla_ros_bridge:
             rospy.on_shutdown(carla_ros_bridge.on_shutdown)
             carla_ros_bridge.run()
+
 
 
 if __name__ == "__main__":

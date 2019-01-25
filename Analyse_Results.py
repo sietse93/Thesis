@@ -1,5 +1,6 @@
 from CarlaSlamPerformance import *
 from consistency_control import *
+from evaluate_RPE_dist import evaluate_RPE_dist
 
 
 def main():
@@ -29,20 +30,24 @@ def main():
         orb_dynamic.process_data()
 
     time_step = 2
+    distance = 50
 
     # Evaluate actual pose over time
-    evaluate_objects = [gt_static, orb_static, orb_dynamic]
+    # evaluate_objects = [gt_static, orb_static, orb_dynamic]
     # evaluate_objects = [gt_static, orb_static, orb_static2]
-    compare_position(evaluate_objects)
-    compare_euler_angles(evaluate_objects)
-    evaluate_trajectory(evaluate_objects)
+    # compare_position(evaluate_objects)
+    # compare_euler_angles(evaluate_objects)
+    # evaluate_trajectory(evaluate_objects)
 
     # Evaluate Relative Pose Error
     # evaluate_RPE([gt_static], [orb_static], time_step=time_step)
-    evaluate_RPE([gt_static, gt_dynamic], [orb_static, orb_dynamic], time_step=time_step)
+    # evaluate_RPE([gt_static, gt_dynamic], [orb_static, orb_dynamic], time_step=time_step)
 
     # Difference between the dynamic groundtruth and static groundtruth
-    gt_consistency(gt_dynamic, gt_static)
+    # gt_consistency(gt_dynamic, gt_static)
+
+    # difference_positions([gt_static, gt_dynamic], [orb_static, orb_dynamic])
+    evaluate_RPE_dist([gt_static, gt_dynamic], [orb_static, orb_dynamic], distance)
     plt.show()
 
 
