@@ -103,29 +103,29 @@ def evaluate_RPE_dist(GT, SLAM, eva_dist=float):
 
         plt.figure("RPE translational error dissected")
         plt.subplot(3, 1, 1)
-        plt.plot(time_used, RPE_x, label=Slam.label)
+        plt.plot(time_used, RPE_x, Slam.plotstyle, label=Slam.label)
         plt.xlabel("time [s]")
         plt.ylabel("translational error x [%] ")
 
         plt.subplot(3, 1, 2)
-        plt.plot(time_used, RPE_y, label=Slam.label)
+        plt.plot(time_used, RPE_y, Slam.plotstyle, label=Slam.label)
         plt.xlabel("time [s]")
         plt.ylabel("translational error y [%] ")
 
         plt.subplot(3, 1, 3)
-        plt.plot(time_used, RPE_z, label=Slam.label)
+        plt.plot(time_used, RPE_z, Slam.plotstyle, label=Slam.label)
         plt.xlabel("time [s]")
         plt.ylabel("translational error z [%] ")
         plt.legend()
 
         plt.figure("RPE Magnitude over distance")
         plt.subplot(2, 1, 1)
-        plt.plot(time_used, trans_errs, label=Slam.label)
+        plt.plot(time_used, trans_errs, Slam.plotstyle, label=Slam.label)
         plt.xlabel("time [s]")
         plt.ylabel("translational error [%]")
 
         plt.subplot(2, 1, 2)
-        plt.plot(time_used, rot_errs, label=Slam.label)
+        plt.plot(time_used, rot_errs, Slam.plotstyle, label=Slam.label)
         plt.xlabel("time [s]")
         plt.ylabel("rotational error [deg/m]")
         plt.legend()
@@ -134,22 +134,25 @@ def evaluate_RPE_dist(GT, SLAM, eva_dist=float):
 def main():
     method_gt = "gt"
     gt_file_static = "/home/sietse/PrelimExpStaticVsDynamic/SL_58_NV_0_SV_1_gt.txt"
+    gt_ps_static = 'k-'
     gt_file_dynamic = "/home/sietse/PrelimExpStaticVsDynamic/SL_58_NV_40_SV_1_gt.txt"
+    gt_ps_dynamic = 'k-.'
 
-    with CarlaSlamEvaluate(method_gt, gt_file_static) as gt_static:
+    with CarlaSlamEvaluate(method_gt, gt_file_static, gt_ps_static) as gt_static:
         gt_static.process_data()
 
-    with CarlaSlamEvaluate(method_gt, gt_file_dynamic) as gt_dynamic:
+    with CarlaSlamEvaluate(method_gt, gt_file_dynamic, gt_ps_dynamic) as gt_dynamic:
         gt_dynamic.process_data()
 
     method_orb = "orb"
     orb_file_static = "/home/sietse/PrelimExpStaticVsDynamic/SL_58_NV_0_SV_1_orb.txt"
+    orb_ps_static = 'b-'
     orb_file_dynamic = "/home/sietse/PrelimExpStaticVsDynamic/SL_58_NV_40_SV_1_orb.txt"
-
-    with CarlaSlamEvaluate(method_orb, orb_file_static) as orb_static:
+    orb_ps_dynamic = 'r-'
+    with CarlaSlamEvaluate(method_orb, orb_file_static, orb_ps_static) as orb_static:
         orb_static.process_data()
 
-    with CarlaSlamEvaluate(method_orb, orb_file_dynamic) as orb_dynamic:
+    with CarlaSlamEvaluate(method_orb, orb_file_dynamic, orb_ps_dynamic) as orb_dynamic:
         orb_dynamic.process_data()
 
     distance = 50
