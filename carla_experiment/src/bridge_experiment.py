@@ -122,7 +122,6 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
                 # use logged control if autopilot is false
                 # find the actual timestamp
                 time_index = self.log_control_gamestamp.index(self.carla_game_stamp)
-                rospy.loginfo("actual gamestamp = {}, logged gamestamp = {}".format(self.carla_game_stamp, self.log_control_gamestamp[time_index]))
                 steer_control = self.log_control_steer[time_index]
                 throttle_control = self.log_control_throttle[time_index]
                 brake_control = self.log_control_brake[time_index]
