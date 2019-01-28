@@ -1,4 +1,4 @@
-from CarlaSlamPerformance import CarlaSlamEvaluate, evaluate_trajectory, evaluate_pose_over_time
+from CarlaSlamPerformance import CarlaSlamEvaluate
 from matplotlib import pyplot as plt
 import math
 import numpy
@@ -40,8 +40,8 @@ def gt_consistency(dynamic, static):
     plt.plot(dynamic.time, error_mag)
     plt.xlabel("time [s]")
     plt.ylabel("magnitude error [m]")
-    notequal_traj_index = numpy.nonzero(error_mag)
-    print(dynamic.time[notequal_traj_index[0][0]])
+    # notequal_traj_index = numpy.nonzero(error_mag)
+    # print(dynamic.time[notequal_traj_index[0][0]])
 
 def main():
     method_gt = "gt"
