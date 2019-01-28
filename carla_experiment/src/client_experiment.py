@@ -26,10 +26,10 @@ def main():
         rospy.loginfo("Connected")
 
         # Where should the car start
-        start_position = 58
+        start_position = 105
 
         # What distance should the vehicle travel
-        distance_experiment = 50
+        distance_experiment = 500
 
         # if the gt is logged, a bag file will be created.
         if rospy.get_param('log_gt', True):
