@@ -18,10 +18,10 @@ def load_experiment(flocation, SL):
 
     method_orb = "orb"
 
-    with CarlaSlamEvaluate(method_orb, floc_orb_static, 'r-') as orb_static:
+    with CarlaSlamEvaluate(method_orb, floc_orb_static, 'b-') as orb_static:
         orb_static.process_data()
 
-    with CarlaSlamEvaluate(method_orb, floc_orb_dynamic, 'b--') as orb_dynamic:
+    with CarlaSlamEvaluate(method_orb, floc_orb_dynamic, 'r--') as orb_dynamic:
         orb_dynamic.process_data()
 
     return gt_static, gt_dynamic, orb_static, orb_dynamic

@@ -47,6 +47,10 @@ class CarlaSlamEvaluate(object):
         # time stamps used for RPE
         self.timeQ1Q2 = []
 
+        # Root Mean Square Error of Relative Pose Error over distance
+        self.RPE_RMSE_dist = []
+
+
     def __enter__(self):
         self.data = open(self.flocation, "r")
         # This should label the object to the file name which should be descriptive enough

@@ -77,7 +77,7 @@ def evaluate_RPE_dist(GT, SLAM, eva_dist=float):
                 Q1Q2_gt_i_inv = np.linalg.inv(Q1Q2_gt_i)
                 RPE_i = Q1Q2_gt_i_inv.dot(slamQ1Q2_i)
 
-                # Calculate magnitude translational error
+                # Calculate magnitude translational error and normalize to distance
                 RPE_x_i = RPE_i[0][3]
                 RPE_x.append(RPE_x_i)
                 RPE_y_i = RPE_i[1][3]
@@ -87,7 +87,7 @@ def evaluate_RPE_dist(GT, SLAM, eva_dist=float):
                 trans_err = math.sqrt(RPE_x_i ** 2 + RPE_y_i ** 2 + RPE_z_i ** 2) / eva_dist
                 trans_errs.append(trans_err)
 
-                # Calculate magnitude of angle
+                # Calculate magnitude of angle and normalize to distance
                 a = RPE_i[0][0]  # roll
                 b = RPE_i[1][1]  # pitch
                 c = RPE_i[2][2]  # yaw
@@ -101,6 +101,26 @@ def evaluate_RPE_dist(GT, SLAM, eva_dist=float):
             except IndexError:
                 continue
 
+        # Calculate the Root Mean Square Error
+        RPE_RMSE_dist_trans = np.sqrt(np.sum(np.array(trans_errs)**2)/len(trans_errs))
+        RPE_RMSE_dist_rot = np.sqrt(np.sum(np.array(rot_errs) ** 2) / len(rot_errs))
+        Slam.RPE_RMSE_dist = [RPE_RMSE_dist_trans, RPE_RMSE_dist_rot]
+
+
+        index_NV = Slam.label.find("NV_")
+        if Slam.label[index_NV+3] == "0":
+            StatOrDyn = "static"
+        else:
+            StatOrDyn = "dynamic"
+        print("RMSE RPE/distance for {} {} is:\n{} [%] translational error \n{} [deg/m] rotational error".format(Slam.method,
+                                                                                                StatOrDyn,
+                                                                                                Slam.RPE_RMSE_dist[0],
+                                                                                                Slam.RPE_RMSE_dist[1]))
+
+        # print("Std Deviation RPE/distance for {} {} is:\n{} [%] translational error \n{} [deg/m] rotational error".format(Slam.method,
+        #                                                                                                     StatOrDyn,
+        #                                                                                                     Slam.RPE_dist_stddev[0],
+        #                                                                                                     Slam.RPE_dist_stddev[1]))
         plt.figure("RPE translational error dissected")
         plt.subplot(3, 1, 1)
         plt.plot(time_used, RPE_x, Slam.plotstyle, label=Slam.label)

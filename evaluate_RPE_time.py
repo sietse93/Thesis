@@ -134,7 +134,7 @@ def evaluate_RPE_time(GT, SLAM, time_step=float):
         # # plt.plot(time_debug, Q1Q2_debugz, 'o', label='linear interpolated')
         # plt.legend()
 
-        plt.figure("RPE")
+        plt.figure("RPE over time")
         plt.subplot(3, 1, 1)
         plt.plot(Slam.timeQ1Q2, RPEx, Slam.plotstyle, label=Slam.label)
         plt.xlabel("time [s]")
@@ -149,7 +149,7 @@ def evaluate_RPE_time(GT, SLAM, time_step=float):
         plt.ylabel("RPE z [m]")
         plt.legend()
 
-        plt.figure("Error Magnitude")
+        plt.figure("RPE Magnitude over time")
         plt.subplot(2, 1, 1)
         plt.plot(Slam.timeQ1Q2, trans_errs, Slam.plotstyle, label=Slam.label)
         plt.xlabel("time [s]")
