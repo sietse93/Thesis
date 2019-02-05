@@ -6,9 +6,10 @@ Two windows required: a server and a client
 
 ### Window 1: Server
 Activate server with this bash script in the compiled game directory
-'''
+
+```
 ./CarlaServer.sh
-'''
+```
 
 The bash script contains the following command
 '''./CarlaUE4.sh -carla-server -benchmark -fps=40 -windowed -ResX=600 -ResY=600'''
