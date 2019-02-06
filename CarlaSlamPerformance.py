@@ -206,7 +206,7 @@ class CarlaSlamEvaluate(object):
                 x_new = z_orb
                 y_new = -x_orb
                 z_new = -y_orb
-                position = [x_new, y_new, z_new]
+                position = np.array([x_new, y_new, z_new])
                 self.positions.append(position)
 
                 # Quaternions is defined as iq1+jq2+kq3+q4
