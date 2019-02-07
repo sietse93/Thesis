@@ -1,4 +1,3 @@
-from CarlaSlamPerformance import CarlaSlamEvaluate
 from consistency_control import gt_consistency
 from evaluate_RPE_dist import evaluate_RPE_dist
 from evaluate_RPE_time import evaluate_RPE_time
@@ -9,15 +8,18 @@ from load_experiment import load_experiment
 
 def main():
     flocation = "/home/sietse/official_experiment_data/"
-    SL = 144
+    SL = 20
     (gt_static, gt_dynamic, orb_static, orb_dynamic) = load_experiment(flocation, SL)
 
+    # All plots have grids
+    plt.rcParams['axes.grid'] = True
 
     # First step is to check ground truth consistency between dynamic and ground truth trajectory
-    # gt_consistency(gt_dynamic, gt_static)
+    gt_consistency(gt_dynamic, gt_static)
 
     # If the error is negligible only one gt suffices in the method list
     methods = [gt_static, orb_static, orb_dynamic]
+
 
     # Check the overall estimated trajectory
     evaluate_trajectory(methods)
@@ -29,9 +31,12 @@ def main():
 
     distance = 50
     evaluate_RPE_dist(GT, SLAM, distance)
-    # print("mean RPE for orb static is {} \n mean RPE for orb dynamic is {}".format(orb_static.RPE_dist_mean, orb_dynamic.RPE_dist_mean))
+
+    print("Difference between static and dynamic RMSE is {}".format(orb_static.RPE_RMSE_dist - orb_dynamic.RPE_RMSE_dist))
     time_step = 1
     evaluate_RPE_time(GT, SLAM, time_step)
+
+
     plt.show()
 
 

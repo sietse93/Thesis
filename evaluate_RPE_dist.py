@@ -104,8 +104,8 @@ def evaluate_RPE_dist(GT, SLAM, eva_dist=float):
         # Calculate the Root Mean Square Error
         RPE_RMSE_dist_trans = np.sqrt(np.sum(np.array(trans_errs)**2)/len(trans_errs))
         RPE_RMSE_dist_rot = np.sqrt(np.sum(np.array(rot_errs) ** 2) / len(rot_errs))
-        Slam.RPE_RMSE_dist = [RPE_RMSE_dist_trans, RPE_RMSE_dist_rot]
-
+        # Slam.RPE_RMSE_dist = [RPE_RMSE_dist_trans, RPE_RMSE_dist_rot]
+        Slam.RPE_RMSE_dist = np.array([RPE_RMSE_dist_trans, RPE_RMSE_dist_rot])
 
         index_NV = Slam.label.find("NV_")
         if Slam.label[index_NV+3] == "0":
