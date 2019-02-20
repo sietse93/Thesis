@@ -26,7 +26,7 @@ def main():
         rospy.loginfo("Connected")
 
         # Where should the car start
-        start_position = 105
+        start_position = 40
 
         # What distance should the vehicle travel
         distance_experiment = 500

@@ -121,7 +121,7 @@ def evaluate_RPE_dist(GT, SLAM, eva_dist=float):
         #                                                                                                     StatOrDyn,
         #                                                                                                     Slam.RPE_dist_stddev[0],
         #                                                                                                     Slam.RPE_dist_stddev[1]))
-        plt.figure("RPE translational error dissected")
+        plt.figure("RPE translational error over distance dissected")
         plt.subplot(3, 1, 1)
         plt.plot(time_used, RPE_x, Slam.plotstyle, label=Slam.label)
         plt.xlabel("time [s]")

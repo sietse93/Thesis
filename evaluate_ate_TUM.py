@@ -58,12 +58,19 @@ def align(model,data):
     
     """
     numpy.set_printoptions(precision=3,suppress=True)
+
+    # start at zero
     model_zerocentered = model - model.mean(1)
     data_zerocentered = data - data.mean(1)
     
     W = numpy.zeros( (3,3) )
+    # shape[1] = first value of tuple that gives matrix size, ergo number of columns
+    # range(3) = [0 1 2], ergo gives index
     for column in range(model.shape[1]):
+        # matrix is added which is the outer product all the positions
+        # this results into a 3x3 matrix , which in the Horn paper is referred to as M
         W += numpy.outer(model_zerocentered[:,column],data_zerocentered[:,column])
+    # singular value decomposition of W.
     U,d,Vh = numpy.linalg.linalg.svd(W.transpose())
     S = numpy.matrix(numpy.identity( 3 ))
     if(numpy.linalg.det(U) * numpy.linalg.det(Vh)<0):
@@ -126,26 +133,36 @@ if __name__=="__main__":
     parser.add_argument('--verbose', help='print all evaluation data (otherwise, only the RMSE absolute translational error in meters after alignment will be printed)', action='store_true')
     args = parser.parse_args()
 
+    # seems to be a dictionary of floats
+    # ground truth
     first_list = associate.read_file_list(args.first_file)
+    # estimated trajectory
     second_list = associate.read_file_list(args.second_file)
 
+    # matches the timestamps, but timestamps are never exact. Inputs a maximum allowed error.
+    # Output: matches = list of matched tuples((stamp1, data1), (stamp2, data2))
     matches = associate.associate(first_list, second_list,float(args.offset),float(args.max_difference))    
     if len(matches)<2:
         sys.exit("Couldn't find matching timestamp pairs between groundtruth and estimated trajectory! Did you choose the correct sequence?")
 
-
+    # vector xyz of floats of the ground truth
     first_xyz = numpy.matrix([[float(value) for value in first_list[a][0:3]] for a,b in matches]).transpose()
+    # vector xyz of floats of pose estimate
     second_xyz = numpy.matrix([[float(value)*float(args.scale) for value in second_list[b][0:3]] for a,b in matches]).transpose()
-    rot,trans,trans_error = align(second_xyz,first_xyz)
-    
+    rot, trans, trans_error = align(second_xyz, first_xyz)
+
+    # align pose estimates over ground truth of only the matched data
     second_xyz_aligned = rot * second_xyz + trans
     
     first_stamps = first_list.keys()
     first_stamps.sort()
+
+    # use all data of ground truth
     first_xyz_full = numpy.matrix([[float(value) for value in first_list[b][0:3]] for b in first_stamps]).transpose()
     
     second_stamps = second_list.keys()
     second_stamps.sort()
+    # transform all pose data on ground truth
     second_xyz_full = numpy.matrix([[float(value)*float(args.scale) for value in second_list[b][0:3]] for b in second_stamps]).transpose()
     second_xyz_full_aligned = rot * second_xyz_full + trans
     

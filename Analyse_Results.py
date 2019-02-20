@@ -1,21 +1,21 @@
 from consistency_control import gt_consistency
 from evaluate_RPE_dist import evaluate_RPE_dist
 from evaluate_RPE_time import evaluate_RPE_time
-from evaluate_pose import evaluate_pose_over_time, evaluate_trajectory
+from evaluate_pose import evaluate_pose_over_time, evaluate_trajectory, difference_pose
 from matplotlib import pyplot as plt
 from load_experiment import load_experiment
 
 
 def main():
     flocation = "/home/sietse/official_experiment_data/"
-    SL = 20
+    SL = 40
     (gt_static, gt_dynamic, orb_static, orb_dynamic) = load_experiment(flocation, SL)
 
     # All plots have grids
     plt.rcParams['axes.grid'] = True
 
     # First step is to check ground truth consistency between dynamic and ground truth trajectory
-    gt_consistency(gt_dynamic, gt_static)
+    # gt_consistency(gt_dynamic, gt_static)
 
     # If the error is negligible only one gt suffices in the method list
     methods = [gt_static, orb_static, orb_dynamic]
@@ -28,7 +28,7 @@ def main():
     GT = [gt_static, gt_dynamic]
     SLAM = [orb_static, orb_dynamic]
     evaluate_pose_over_time(GT, SLAM)
-
+    difference_pose(GT, SLAM)
     distance = 50
     evaluate_RPE_dist(GT, SLAM, distance)
 

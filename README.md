@@ -52,6 +52,8 @@ stereo_static_ApOff.launch
 ``` 
 static environment, uses the control.txt as control input, creates rosbag
 
+Note that the starting location and traveled distance is in the client_experiment.py file
+
 ## Create a pose estimation with ORBSLAM
 3 windows: roscore, ORB_SLAM2 node and rosbag play
 

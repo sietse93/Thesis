@@ -28,7 +28,7 @@ def compare_position(methods):
     plt.legend()
 
 
-def difference_positions(GT, SLAM):
+def difference_pose(GT, SLAM):
     """Plots the difference in position over time in the 3 axis"""
 
     plt.figure("Difference Pose over time")
@@ -37,33 +37,54 @@ def difference_positions(GT, SLAM):
         diff_x = []
         diff_y = []
         diff_z = []
+        diff_roll = []
+        diff_pitch = []
+        diff_yaw = []
         time_used = []
-        for timestamp, position in zip(Slam.time, Slam.positions):
+        for timestamp, position, orientation in zip(Slam.time, Slam.positions, Slam.orientations):
             try:
                 eq_gt_index = gt.time.index(timestamp)
                 time_used.append(gt.time[eq_gt_index])
                 gt_position = gt.positions[eq_gt_index]
-                diff_x.append(gt_position[0]-position[0])
-                diff_y.append(gt_position[1] - position[1])
-                diff_z.append(gt_position[2] - position[2])
+                gt_orientation = gt.orientations[eq_gt_index]
+                diff_x.append(position[0] - gt_position[0])
+                diff_y.append(position[1] - gt_position[1])
+                diff_z.append(position[2] - gt_position[2])
+                diff_roll.append(orientation[0]-gt_orientation[0])
+                diff_pitch.append(orientation[1] - gt_orientation[1])
+                diff_yaw.append(orientation[2]-gt_orientation[2])
             except ValueError:
                 continue
 
-        plt.grid(True)
-        plt.subplot(3, 1, 1)
+        plt.subplot(3, 2, 1)
         plt.plot(time_used, diff_x, Slam.plotstyle, label=Slam.label)
         plt.xlabel("time [s]")
         plt.ylabel(" difference in x [m]")
 
-        plt.subplot(3,1,2)
+        plt.subplot(3,2,3)
         plt.plot(time_used, diff_y, Slam.plotstyle, label=Slam.label)
         plt.xlabel("time [s]")
         plt.ylabel(" difference in y [m]")
 
-        plt.subplot(3,1,3)
+        plt.subplot(3,2,5)
         plt.plot(time_used, diff_z, Slam.plotstyle, label=Slam.label)
         plt.xlabel("time [s]")
         plt.ylabel(" difference in z [m]")
+
+        plt.subplot(3,2,2)
+        plt.plot(time_used, diff_roll, Slam.plotstyle, label=Slam.label)
+        plt.xlabel("time [s]")
+        plt.ylabel(" difference in roll [deg]")
+
+        plt.subplot(3,2,4)
+        plt.plot(time_used, diff_pitch, Slam.plotstyle, label=Slam.label)
+        plt.xlabel("time [s]")
+        plt.ylabel(" difference in pitch [deg]")
+
+        plt.subplot(3,2,6)
+        plt.plot(time_used, diff_yaw, Slam.plotstyle, label=Slam.label)
+        plt.xlabel("time [s]")
+        plt.ylabel(" difference in yaw [deg]")
 
         plt.legend()
 
@@ -143,7 +164,7 @@ def evaluate_pose_over_time(GT, SLAM):
 
     # create layout for the plots
     # plt.figure("Pose over time")
-    plt.figure()
+    plt.figure("Pose over time")
     plt.title('Pose over time')
 
     plt.subplot(3, 2, 1)
