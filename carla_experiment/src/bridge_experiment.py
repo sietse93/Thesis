@@ -31,6 +31,10 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
         # This will contain the control data which is either written or read
         self.control_data = {}
 
+        # This will contain the id, timestamp, location of dynamic agents
+        # Note this will only be used when autopilot is on
+        self.da_data = {}
+
         # This will only be used if control data needs to be read
         self.log_control_gamestamp = []
         self.log_control_steer = []
@@ -106,6 +110,7 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
             self.send_msgs()
 
             # handle control: log control commands if autopilot is true
+            # log dynamic agent ground truth
             if rospy.get_param('carla_autopilot', True):
                 control = measurements.player_measurements.autopilot_control
                 control_log_line = '{} {} {} {} {} {}\n'.format(self.carla_game_stamp,
@@ -116,6 +121,18 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
                                                                     control.reverse)
                 self.control_data.write(control_log_line)
                 self.client.send_control(control)
+
+                # log location all dynamic agents for situation labeling
+                for agent in measurements.non_player_agents:
+
+                    # NOTE: add pedestrian statement if these will be in experiments
+                    if agent.HasField('vehicle'):
+                        agent_location = agent.vehicle.transform.location
+                        da_log_line = '{} {} {} {}\n'.format(self.carla_game_stamp,
+                                                             agent.id,
+                                                             agent_location.x,
+                                                             agent_location.y)
+                        self.da_data.write(da_log_line)
 
             # handle control: use logged control commands if autopilot is false
             else:
@@ -181,20 +198,22 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
         # It is difficult to specify which autopilot needs to be used (could be set in a launch file though...)
         if rospy.get_param('carla_autopilot', True):
             self.control_data = open(home_user + "/control.txt", 'w')
-            rospy.loginfo("Opened control file to write")
+            self.da_data = open(filename + "_da.txt", 'w')
+            rospy.loginfo("Opened control and dynamic agents file to write")
         else:
             self.control_data = open(home_user + "/control.txt", 'r')
             rospy.loginfo("Opened control file to read")
 
-        # Log the groundtruth if the parameter is true
+        # Log the ground truth if the parameter is true
         if rospy.get_param('log_gt', True):
             self.gt_data = open(filename + "_gt.txt", 'w')
-            rospy.loginfo("Opened groundtruth file to write")
+            rospy.loginfo("Opened ground truth file to write")
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.control_data.close()
-        rospy.loginfo("Closed control file")
+        self.da_data.close()
+        rospy.loginfo("Closed control and dynamic agent file")
 
         if rospy.get_param('log_gt', True):
             self.gt_data.close()
