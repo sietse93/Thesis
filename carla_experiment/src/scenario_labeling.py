@@ -143,8 +143,51 @@ class ScenarioProcessor:
 
         return encountered_vehicles
 
+    def scenario_creator(self, hero, encountered_vehicles):
+        """Converts location data into Scenario objects"""
+
+        hero_time = [data_line[0] for data_line in hero.data]
+        # describe whether hero was moving when agent encountered vehicle
+        for encountered_vehicle in encountered_vehicles:
+            # extract encountered vehicle time
+            vehicle_time = [data_line[0] for data_line in encountered_vehicle.data]
+
+            # find the equivalent hero indexed time
+            begin_time = encountered_vehicle.begin_time
+            end_time = encountered_vehicle.end_time
+            begin_index = hero_time.index(begin_time)
+            end_index = hero_time.index(end_time)
+
+            # this describes the location of the hero when encountered vehicle met the hero
+            hero_encountered = hero.data[begin_index:end_index]
+            hero_encountered_time = [data_line[0] for data_line in hero_encountered]
+
+            # for every time stamp of encountered vehicle, we want a string that describes what happened
+            # loop through every time stamp from encountered vehicle,
+            # match it with the hero time and
+            # check if it was standing still
+            # put everything in a dictionary: with each key a timestamp and each value a string
+            for index, time in enumerate(vehicle_time):
+                # equivalent hero index
+                hero_index = hero_encountered_time.index(time)
+                hero_disp_x = hero_encountered[hero_index+1][1] - hero_encountered[hero_index][1]
+                hero_disp_y = hero_encountered[hero_index+1][1] - hero_encountered[hero_index][1]
+                if hero_disp_x == 0 and hero_disp_y == 0:
+                    hero_string = "hero static"
+                else:
+                    hero_string = "hero dynamic"
+
+                vehicle_disp_x = encountered_vehicle.data[index+1][1] - encountered_vehicle.data[index][1]
+                vehicle_disp_y = encountered_vehicle.data[index+1][2] - encountered_vehicle.data[index][2]
+
+
+
+
+
+
 
 class Vehicle:
+    """"A vehicle spawned in the CARLA"""
     def __init__(self, identity, line_data):
         # contains unique id of the vehicle
         self.id = identity
@@ -153,6 +196,7 @@ class Vehicle:
 
 
 class EncounteredVehicle(Vehicle):
+    """"A Vehicle encountered by hero"""
     def __init__(self, vehicle):
         # All the vehicle data
         Vehicle.__init__(self, vehicle.id, vehicle.data)
@@ -162,6 +206,17 @@ class EncounteredVehicle(Vehicle):
         self.begin_time = ()
         self.end_time = ()
 
+        # temporary scenario list
+        self.temp_scenario_list = []
+
+
+class Scenario:
+    """Description of the situation when the vehicle was encountered"""
+    def __init__(self):
+        self.scenario = ()
+        self.timestamp = []
+        self.begin_time = ()
+        self.end_time = ()
 
 
 def main():
@@ -170,6 +225,7 @@ def main():
         dynamic_agents = SP.process_dynamic_agents()
         hero = SP.process_hero()
         encountered_vehicles = SP.encountered_vehicles_filter(hero, dynamic_agents)
+        SP.scenario_creator(hero, encountered_vehicles)
 
 
 if __name__ == "__main__":
