@@ -1,0 +1,4 @@
+<launch> 
+<node pkg="ORB_SLAM2" type="ros_stereo" name="ORB_stereo_node" />
+<node pkg="rosbag" type="play" name="play" args-"filename.bag" /> 
+<launch/>
