@@ -47,9 +47,10 @@ class ScenarioProcessor:
             # lets test what the data does after the vehicles are spawned
             # only use the data after 1 second of simulation which is equal to the nr fps
             first_line_data = data_single_vehicle[self.fps].split(" ")
-            initiate_vehicle = Vehicle(int(first_line_data[1]), [[float(first_line_data[0])*10**(-3),
-                                                                 float(first_line_data[2]),
-                                                                 float(first_line_data[3])]])
+            initiate_vehicle = Vehicle(int(first_line_data[1]), [[round(float(first_line_data[0])*10**(-3), 3),
+                                                                 round(float(first_line_data[2]), 2),
+                                                                 round(float(first_line_data[3]), 2)]])
+            initiate_vehicle.time.append(round(float(first_line_data[0])*10**(-3), 3))
             # append rest of the data to the vehicle class
             # rest_data_single_vehicle = data_single_vehicle[1:]
             rest_data_single_vehicle = data_single_vehicle[self.fps+1:]
@@ -59,6 +60,7 @@ class ScenarioProcessor:
                 x = round(float(line_data[2]), 2)
                 y = round(float(line_data[3]), 2)
                 initiate_vehicle.data.append([time_stamp, x, y])
+                initiate_vehicle.time.append(time_stamp)
 
             vehicles.append(initiate_vehicle)
 
@@ -91,7 +93,7 @@ class ScenarioProcessor:
 
         # you want the data after that the vehicle is spawned
         for index, data_line in enumerate(hero.data[:-1]):
-
+            hero_time = data_line[0]
             hero_x = data_line[1]
             hero_y = data_line[2]
 
@@ -106,9 +108,12 @@ class ScenarioProcessor:
             # find out which vehicles the hero encounters at each timestamp
             for vehicle in dynamic_agents:
                 encountered = False
-                vehicle_time = vehicle.data[index][0]
-                vehicle_x = vehicle.data[index][1]
-                vehicle_y = vehicle.data[index][2]
+                # get the timestamps from the vehicle
+                # find the equivalent timestamp
+                eq_index = vehicle.time.index(hero_time)
+                vehicle_time = vehicle.time[eq_index]
+                vehicle_x = vehicle.data[eq_index][1]
+                vehicle_y = vehicle.data[eq_index][2]
 
                 # check if vehicle within range in the x-direction
                 if xdirection == 1.0:
@@ -126,6 +131,7 @@ class ScenarioProcessor:
                     if hero_y <= vehicle_y <= (hero_y+vis_range) and \
                             (hero_x-side_range) < vehicle_x <= (hero_x+side_range):
                         encountered = True
+
                 elif ydirection == -1.0:
                     if (hero_y-vis_range) <= vehicle_y <= hero_y and \
                             (hero_x - side_range) < vehicle_x <= (hero_x + side_range):
@@ -238,6 +244,7 @@ class Vehicle:
         self.id = identity
         # contains the data of this vehicle, a list of [timestamp, x, y ] (seconds and world coordinates)
         self.data = line_data
+        self.time = []
 
 
 class EncounteredVehicle(Vehicle):
@@ -269,7 +276,10 @@ def main():
     with ScenarioProcessor(flocation=flocation, SL=40, NV=40) as SP:
         dynamic_agents = SP.process_dynamic_agents()
         hero = SP.process_hero()
+
         encountered_vehicles = SP.encountered_vehicles_filter(hero, dynamic_agents)
+        for encountered_vehicle in encountered_vehicles:
+            print(encountered_vehicle.encounter_data)
 
 
 
