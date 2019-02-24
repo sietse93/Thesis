@@ -4,6 +4,7 @@ stopping vehicle other lane. This code should assist in understanding the data f
 
 """
 import numpy as np
+import math
 
 
 class ScenarioProcessor:
@@ -71,16 +72,18 @@ class ScenarioProcessor:
         data = self.raw_data_gt.readlines()
         # first_line_data = data[0].split(" ")
         first_line_data = data[self.fps].split(" ")
-        hero = Vehicle(0, [[round(float(first_line_data[0])*10**(-3), 3),
-                            round(float(first_line_data[1]), 2),
-                            round(float(first_line_data[2]), 2)]])
+        hero = HeroVehicle(0, [[round(float(first_line_data[0])*10**(-3), 3),
+                                round(float(first_line_data[1]), 2),
+                                round(float(first_line_data[2]), 2)]])
+        hero.heading.append(round(float(first_line_data[6]), 0))
         # rest_raw_data = data[1:]
         rest_raw_data = data[self.fps+1:]
         for line_raw in rest_raw_data:
             line_data = line_raw.split(" ")
-            time_stamp = round(float(line_data[0]) * 10 ** (-3),3)
+            time_stamp = round(float(line_data[0]) * 10 ** (-3), 3)
             x = round(float(line_data[1]), 2)
             y = round(float(line_data[2]), 2)
+            hero.heading.append(round(float(line_data[6]), 0))
             hero.data.append([time_stamp, x, y])
 
         return hero
@@ -96,14 +99,18 @@ class ScenarioProcessor:
             hero_time = data_line[0]
             hero_x = data_line[1]
             hero_y = data_line[2]
+            hero_head_deg = hero.heading[index]
+            hero_head = math.radians(hero_head_deg)
 
-            vis_range = 50  # range threshold in which a dynamic agent can be seen longitudinal
-            side_range = 5  # range threshold in which a dynamic agent can be seen lateral
+            vis_range = 20  # range threshold in which a dynamic agent can be seen longitudinal
+            side_range = 15  # range threshold in which a dynamic agent can be seen lateral
             # try:
             # What to do with the when the vehicle stands still (this also happens in the beginning)
             # find out which direction the hero is travelling
-            xdirection = np.sign(hero.data[index+1][1] - hero_x)
-            ydirection = np.sign(hero.data[index+1][2] - hero_y)
+            disp_x = hero.data[index+1][1] - hero_x
+            disp_y = hero.data[index+1][2] - hero_y
+            xdirection = np.sign(disp_x)
+            ydirection = np.sign(disp_y)
 
             # find out which vehicles the hero encounters at each timestamp
             for vehicle in dynamic_agents:
@@ -114,6 +121,15 @@ class ScenarioProcessor:
                 vehicle_time = vehicle.time[eq_index]
                 vehicle_x = vehicle.data[eq_index][1]
                 vehicle_y = vehicle.data[eq_index][2]
+                if xdirection == 0 and ydirection == 0:
+                    if abs(hero_head_deg) == 0:
+                        xdirection = 1.0
+                    if hero_head_deg == 90:
+                        ydirection = 1.0
+                    if hero_head_deg == -90:
+                        ydirection = -1.0
+                    if 175 < abs(hero_head_deg) <= 180:
+                        xdirection = -1.0
 
                 # check if vehicle within range in the x-direction
                 if xdirection == 1.0:
@@ -247,6 +263,13 @@ class Vehicle:
         self.time = []
 
 
+class HeroVehicle(Vehicle):
+    """Our Hero, now with heading"""
+    def __init__(self, identity, line_data):
+        Vehicle.__init__(self, identity, line_data)
+        self.heading = []
+
+
 class EncounteredVehicle(Vehicle):
     """"A Vehicle encountered by hero"""
     def __init__(self, vehicle):
@@ -276,14 +299,7 @@ def main():
     with ScenarioProcessor(flocation=flocation, SL=40, NV=40) as SP:
         dynamic_agents = SP.process_dynamic_agents()
         hero = SP.process_hero()
-
         encountered_vehicles = SP.encountered_vehicles_filter(hero, dynamic_agents)
-        for encountered_vehicle in encountered_vehicles:
-            print(encountered_vehicle.encounter_data)
-
-
-
-
         # print(len(encountered_vehicles))
         # encountered_vehicle = SP.scenario_creator(hero, encountered_vehicles)
 
