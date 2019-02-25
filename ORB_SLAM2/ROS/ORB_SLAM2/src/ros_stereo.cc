@@ -23,6 +23,7 @@
 #include<algorithm>
 #include<fstream>
 #include<chrono>
+#include<string> 
 
 #include<ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
@@ -52,26 +53,44 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "RGBD");
     ros::start();
-
+/*
     if(argc != 4)
     {
-        cerr << endl << "Usage: rosrun ORB_SLAM2 Stereo path_to_vocabulary path_to_settings do_rectify. Sietse here!" << endl;
+        cerr << endl << "Usage: rosrun ORB_SLAM2 Stereo path_to_vocabulary path_to_settings do_rectify." << endl;
         ros::shutdown();
         return 1;
     }    
+*/
 
+	const string PARAM_NAME_VOC = "path_to_vocabulary"; 
+	const string PARAM_NAME_SET = "path_to_settings"; 
+	string path_voc; 
+	string path_set; 
+
+	bool ok_voc = ros::param::get(PARAM_NAME_VOC, path_voc); 
+	if(!ok_voc){
+		ROS_FATAL_STREAM("Could not get parameter " << PARAM_NAME_VOC);
+	}
+	
+	bool ok_set = ros::param::get(PARAM_NAME_SET, path_set); 
+	if(!ok_set){
+		ROS_FATAL_STREAM("Could not get parameter " << PARAM_NAME_SET);
+	}
+
+	string do_rect = "false"; 
+ 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::STEREO,true);
+    ORB_SLAM2::System SLAM(path_voc,path_set,ORB_SLAM2::System::STEREO,true);
 
     ImageGrabber igb(&SLAM);
 
-    stringstream ss(argv[3]);
+    stringstream ss(do_rect);
 	ss >> boolalpha >> igb.do_rectify;
 
     if(igb.do_rectify)
     {      
         // Load settings related to stereo calibration
-        cv::FileStorage fsSettings(argv[2], cv::FileStorage::READ);
+        cv::FileStorage fsSettings(path_set, cv::FileStorage::READ);
         if(!fsSettings.isOpened())
         {
             cerr << "ERROR: Wrong path to settings" << endl;
