@@ -1,7 +1,6 @@
 <launch> 
 <param name="path_to_vocabulary" value="/home/sietse/ORB_SLAM2/Vocabulary/ORBvoc.txt" />
 <param name="path_to_settings" value="/home/sietse/ORB_SLAM2/Examples/Stereo/CARLA.yaml" />
-<param name="do_rectify" value="false" /> 
 <node pkg="ORB_SLAM2" type="Stereo" name="ORB_stereo_node">
 </node>
 </launch>
