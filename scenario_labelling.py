@@ -180,7 +180,6 @@ class ScenarioProcessor:
         hero_time = [data_line[0] for data_line in hero.data]
         for encountered_vehicle in encountered_vehicles:
 
-
             # extract encountered vehicle time
             vehicle_time = [data_line[0] for data_line in encountered_vehicle.encounter_data]
 
@@ -209,7 +208,6 @@ class ScenarioProcessor:
                     hero_string = "hero static"
                 else:
                     hero_string = "hero dynamic"
-
                 # check if vehicle is moving
                 # vehicle_disp_x = encountered_vehicle.encounter_data[index][1] - encountered_vehicle.encounter_data[index-5][1]
                 # vehicle_disp_y = encountered_vehicle.encounter_data[index][2] - encountered_vehicle.encounter_data[index-5][2]
@@ -300,8 +298,11 @@ def main():
         dynamic_agents = SP.process_dynamic_agents()
         hero = SP.process_hero()
         encountered_vehicles = SP.encountered_vehicles_filter(hero, dynamic_agents)
-        # print(len(encountered_vehicles))
-        # encountered_vehicle = SP.scenario_creator(hero, encountered_vehicles)
+        plot_data = []
+        for encountered_vehicle in encountered_vehicles:
+            plot_data.append([encountered_vehicle.id, encountered_vehicle.begin_time, encountered_vehicle.end_time])
+        print(plot_data)
+        # encountered_vehicle = SP.scenario_creator(hero, encountered_vehicles[0:3])
 
 
 
