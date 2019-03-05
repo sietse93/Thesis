@@ -41,15 +41,13 @@ AverageStatic = average_orb(orb_static_objects, time_step, 'orb_static', 'b-')
 AverageDynamic = average_orb(orb_dynamic_objects, time_step, 'orb_dynamic', 'r--')
 
 # compare their poses over time
-# methods = [AverageStatic, AverageDynamic]
-# compare_position(methods)
-# compare_euler_angles(methods)
-# compare_quaternions(methods)
+methods = [AverageStatic, AverageDynamic]
+compare_position(methods)
+compare_euler_angles(methods)
+compare_quaternions(methods)
 # evaluate RPE over time
-# GT = [gt_static, gt_dyn]
-GT = [gt_dyn]
-# SLAM = [AverageStatic, AverageDynamic]
-SLAM = [AverageDynamic]
+GT = [gt_static, gt_dyn]
+SLAM = [AverageStatic, AverageDynamic]
 time_RPE = 1.0
 evaluate_RPE_time(GT, SLAM, time_RPE)
 
