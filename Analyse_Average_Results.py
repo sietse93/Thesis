@@ -5,6 +5,7 @@ from evaluate_pose import *
 from matplotlib import pyplot as plt
 from CarlaSlamPerformance import CarlaSlamEvaluate
 from average_orb import *
+from evaluate_RPE_time_orbAvgDebug import evaluate_RPE_time_debug
 
 # file locations
 file_string_static = "/home/sietse/official_experiment_data/SL_40_NV_0_SV_1_orb_{}.txt"
@@ -40,15 +41,15 @@ AverageStatic = average_orb(orb_static_objects, time_step, 'orb_static', 'b-')
 AverageDynamic = average_orb(orb_dynamic_objects, time_step, 'orb_dynamic', 'r--')
 
 # compare their poses over time
-methods = [AverageStatic, AverageDynamic]
+# methods = [AverageStatic, AverageDynamic]
 # compare_position(methods)
 # compare_euler_angles(methods)
 # compare_quaternions(methods)
 # evaluate RPE over time
 # GT = [gt_static, gt_dyn]
-GT = [gt_static]
+GT = [gt_dyn]
 # SLAM = [AverageStatic, AverageDynamic]
-SLAM = [AverageStatic]
+SLAM = [AverageDynamic]
 time_RPE = 1.0
 evaluate_RPE_time(GT, SLAM, time_RPE)
 

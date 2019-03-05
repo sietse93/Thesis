@@ -4,6 +4,8 @@ from matplotlib import pyplot as plt
 import tf
 import math
 import evaluate_pose
+import AverageQuaternions
+from pyquaternion import Quaternion
 
 
 class AverageSlamEvaluate:
@@ -41,40 +43,68 @@ def average_orb(SLAM, timestep, label, plotstyle):
     while cur_time != last_timestamp:
         position = np.array([0, 0, 0])
         orientation = np.array([0, 0, 0])
-        n_avg = 0.000
+        n_avg = 0
         for Slam in SLAM:
             try:
                 eq_index = Slam.time.index(cur_time)
                 position = position + Slam.positions[eq_index]
                 orientation = orientation + Slam.orientations[eq_index]
+                if n_avg == 0:
+                    quat = np.array(Slam.quaternions[eq_index])
+                else:
+                    quat = np.vstack([quat, Slam.quaternions[eq_index]])
                 n_avg = n_avg+1
             except ValueError:
                 # print(Slam.flocation, cur_time)
                 continue
         # if there is data, take the average
         if n_avg > 4:
-            # append average position
-            AverageSlam.positions.append(position/n_avg)
+            average_position = position/n_avg
+            AverageSlam.positions.append(average_position)
 
-            # append average orientation in degrees
-            avg_orientation = orientation/n_avg
-            avg_roll = avg_orientation[0]
-            avg_pitch = avg_orientation[1]
-            avg_yaw = avg_orientation[2]
-            AverageSlam.orientations.append(avg_orientation)
+            # We need to use Slerp to average quaternions. Which needs to be used to get the correct rotation matrix.
+            q0 = Quaternion(quat[0][:])
+            q1 = Quaternion(quat[1][:])
+            q2 = Quaternion(quat[2][:])
+            q3 = Quaternion(quat[3][:])
+            q4 = Quaternion(quat[4][:])
+            quat_avg = Quaternion.slerp(Quaternion.slerp(Quaternion.slerp(Quaternion.slerp(q0, q1), q2), q3), q4)
+            quat_avg_array = np.array([quat_avg[0], quat_avg[1], quat_avg[2], quat_avg[3]])
+            AverageSlam.quaternions.append(quat_avg_array)
 
-            # append orientation in quaternions
-            quaternion = tf.transformations.quaternion_from_euler(math.radians(avg_roll),
-                                                                  math.radians(avg_pitch),
-                                                                  math.radians(avg_yaw), axes='sxyz')
-            AverageSlam.quaternions.append(quaternion)
-            # append homogeneous coordinates
-            q_avg = tf.transformations.euler_matrix(math.radians(avg_roll), math.radians(avg_pitch), math.radians(avg_yaw), axes='sxyz')
-            # q_avg = tf.transformations.quaternion_matrix(quaternion)
-            q_avg[0][3] = position[0]
-            q_avg[1][3] = position[1]
-            q_avg[2][3] = position[2]
+            q_avg = tf.transformations.quaternion_matrix(quat_avg_array)
+            q_avg[0][3] = average_position[0]
+            q_avg[1][3] = average_position[1]
+            q_avg[2][3] = average_position[2]
             AverageSlam.Q.append(q_avg)
+
+            # append average position, doesn't work. Lot of sign switching in results
+            # # average quaternion
+            # w = np.ones(n_avg)
+            # quat_avg = AverageQuaternions.average_quat(quat, w)
+            # AverageSlam.quaternions.append(quat_avg)
+
+            # Euler angles, Note yaw probably only gives between 0-180  degrees
+            # avg_roll, avg_pitch, avg_yaw = tf.transformations.euler_from_quaternion(quat_avg_array, axes='sxyz')
+            # avg_orientation = np.array([avg_roll, avg_pitch, avg_yaw])
+            # AverageSlam.orientations.append(avg_orientation
+
+            # append average orientation in degrees, if I convert Quaternion to euler angles it will give me wrong data.
+            avg_orientation = orientation/n_avg
+            AverageSlam.orientations.append(avg_orientation)
+            #
+            # # append orientation in quaternions
+            # quaternion = tf.transformations.quaternion_from_euler(math.radians(avg_roll),
+            #                                                       math.radians(avg_pitch),
+            #                                                       math.radians(avg_yaw), axes='sxyz')
+            # AverageSlam.quaternions.append(quaternion)
+            # # append homogeneous coordinates
+            # q_avg = tf.transformations.euler_matrix(math.radians(avg_roll), math.radians(avg_pitch), math.radians(avg_yaw), axes='sxyz')
+            # # q_avg = tf.transformations.quaternion_matrix(quaternion)
+            # q_avg[0][3] = position[0]
+            # q_avg[1][3] = position[1]
+            # q_avg[2][3] = position[2]
+            # AverageSlam.Q.append(q_avg)
             AverageSlam.time.append(cur_time)
 
         cur_time = round(cur_time + timestep, 3)
@@ -115,6 +145,7 @@ def main():
     # print(len(AverageStatic.time), len(AverageStatic.orientations))
     evaluate_pose.compare_position(SLAM)
     evaluate_pose.compare_euler_angles(SLAM)
+    evaluate_pose.compare_quaternions(SLAM)
 
     plt.show()
 
