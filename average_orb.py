@@ -16,13 +16,26 @@ class AverageSlamEvaluate:
         self.quaternions = []
         self.Q = []
 
+        # The function only uses the data that has more than 4 data points on each timestamp. It could be that
+        # large time gaps result. time_gap shows the biggest gap in time, between the timestamps.
+        self.time_gap = ()
 
-def average_orb(SLAM, timestep, label):
+        # Relative pose change over a certain time frame expressed in homogeneous coordinates
+        self.Q1Q2 = []
+
+        # time stamps used for RPE
+        self.timeQ1Q2 = []
+
+        # Root Mean Square Error of Relative Pose Error over distance
+        self.RPE_RMSE_dist = []
+
+
+def average_orb(SLAM, timestep, label, plotstyle):
     """Input a list of CarlaSlamEvaluate objects from the orb data. The function averages the value of the pose
     for the timestamps that are available."""
     last_timestamp = SLAM[0].time[-1]
     cur_time = 0
-    AverageSlam = AverageSlamEvaluate(label, 'r-')
+    AverageSlam = AverageSlamEvaluate(label, plotstyle)
 
     # loop through all timestamps
     while cur_time != last_timestamp:
@@ -56,9 +69,8 @@ def average_orb(SLAM, timestep, label):
                                                                   math.radians(avg_yaw), axes='sxyz')
             AverageSlam.quaternions.append(quaternion)
             # append homogeneous coordinates
-            q_avg = tf.transformations.euler_matrix(math.radians(avg_roll),
-                                                math.radians(avg_pitch),
-                                                math.radians(avg_yaw), axes='sxyz')
+            q_avg = tf.transformations.euler_matrix(math.radians(avg_roll), math.radians(avg_pitch), math.radians(avg_yaw), axes='sxyz')
+            # q_avg = tf.transformations.quaternion_matrix(quaternion)
             q_avg[0][3] = position[0]
             q_avg[1][3] = position[1]
             q_avg[2][3] = position[2]
@@ -67,6 +79,10 @@ def average_orb(SLAM, timestep, label):
 
         cur_time = round(cur_time + timestep, 3)
 
+    AverageSlam.time_gap = 0
+    for index, time_stamp in enumerate(AverageSlam.time[:-1]):
+        if AverageSlam.time[index + 1] - time_stamp > AverageSlam.time_gap:
+            AverageSlam.time_gap = AverageSlam.time[index + 1] - time_stamp
     return AverageSlam
 
 
@@ -94,11 +110,12 @@ def main():
 
     timestep = 0.025
     SLAM = [orb_static_1, orb_static_2, orb_static_3, orb_static_4, orb_static_5]
-    AverageStatic = average_orb(SLAM, timestep, 'orb_static')
+    AverageStatic = average_orb(SLAM, timestep, 'orb_static', 'r-')
     SLAM.append(AverageStatic)
     # print(len(AverageStatic.time), len(AverageStatic.orientations))
     evaluate_pose.compare_position(SLAM)
     evaluate_pose.compare_euler_angles(SLAM)
+
     plt.show()
 
 

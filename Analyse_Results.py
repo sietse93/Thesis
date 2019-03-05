@@ -20,7 +20,6 @@ def main():
     # If the error is negligible only one gt suffices in the method list
     methods = [gt_static, orb_static, orb_dynamic]
 
-
     # Check the overall estimated trajectory
     evaluate_trajectory(methods)
 
@@ -32,10 +31,9 @@ def main():
     distance = 50
     evaluate_RPE_dist(GT, SLAM, distance)
 
-    print("Difference between static and dynamic RMSE is {}".format(orb_static.RPE_RMSE_dist - orb_dynamic.RPE_RMSE_dist))
+    # print("Difference between static and dynamic RMSE is {}".format(orb_static.RPE_RMSE_dist - orb_dynamic.RPE_RMSE_dist))
     time_step = 1
     evaluate_RPE_time(GT, SLAM, time_step)
-
 
     plt.show()
 

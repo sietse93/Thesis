@@ -22,8 +22,7 @@
 #include<iostream>
 #include<algorithm>
 #include<fstream>
-#include<chrono>
-#include<string> 
+#include<chrono> 
 
 #include<ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
@@ -64,8 +63,13 @@ int main(int argc, char **argv)
 
 	const string PARAM_NAME_VOC = "path_to_vocabulary"; 
 	const string PARAM_NAME_SET = "path_to_settings"; 
+	const string PARAM_NAME_FILE = "path_to_bag";
+	const string PARAM_N_ORB = "n_orb";
+	string path_file; 
 	string path_voc; 
-	string path_set; 
+	string path_set;
+	string n_orb;
+
 
 	bool ok_voc = ros::param::get(PARAM_NAME_VOC, path_voc); 
 	if(!ok_voc){
@@ -77,10 +81,20 @@ int main(int argc, char **argv)
 		ROS_FATAL_STREAM("Could not get parameter " << PARAM_NAME_SET);
 	}
 
-	string do_rect = "false"; 
- 
+    bool ok_file = ros::param::get(PARAM_NAME_FILE, path_file);
+    if(!ok_file){
+        ROS_FATAL_STREAM("Could not get parameter " << PARAM_NAME_FILE);
+    }
+
+    bool ok_orb = ros::param::get(PARAM_N_ORB, n_orb);
+    if(!ok_orb){
+        ROS_FATAL_STREAM("Could not get parameter " << PARAM_N_ORB);
+    }
+	cout << n_orb << endl; 
+    string do_rect = "false";
+
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM2::System SLAM(path_voc,path_set,ORB_SLAM2::System::STEREO,true);
+    ORB_SLAM2::System SLAM(path_voc, path_set,ORB_SLAM2::System::STEREO,true);
 
     ImageGrabber igb(&SLAM);
 
@@ -138,10 +152,10 @@ int main(int argc, char **argv)
 
     // Stop all threads
     SLAM.Shutdown();
-
+    string complete_name = path_file+"_orb"+ n_orb+".txt";
     // Save camera trajectory
     SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory_TUM_Format.txt");
-    SLAM.SaveTrajectoryTUM("FrameTrajectory_TUM_Format.txt");
+    SLAM.SaveTrajectoryTUM(complete_name);
     SLAM.SaveTrajectoryKITTI("FrameTrajectory_KITTI_Format.txt");
 
     ros::shutdown();

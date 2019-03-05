@@ -1,7 +1,11 @@
 <launch> 
+<arg name="file_path" default="name" /> 
+<param name="path_to_bag" value="$(arg file_path)" /> 
 <param name="path_to_vocabulary" value="/home/sietse/ORB_SLAM2/Vocabulary/ORBvoc.txt" />
 <param name="path_to_settings" value="/home/sietse/ORB_SLAM2/Examples/Stereo/CARLA.yaml" />
 <node pkg="ORB_SLAM2" type="Stereo" name="ORB_stereo_node">
+
 </node>
+
 </launch>
 

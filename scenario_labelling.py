@@ -174,6 +174,7 @@ class ScenarioProcessor:
 
         return encountered_vehicles
 
+    # to do: scenario creator does not work!!!
     def scenario_creator(self, hero, encountered_vehicles):
         """Converts location data into Scenario objects"""
 
