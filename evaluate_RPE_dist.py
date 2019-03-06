@@ -107,15 +107,15 @@ def evaluate_RPE_dist(GT, SLAM, eva_dist=float):
         # Slam.RPE_RMSE_dist = [RPE_RMSE_dist_trans, RPE_RMSE_dist_rot]
         Slam.RPE_RMSE_dist = np.array([RPE_RMSE_dist_trans, RPE_RMSE_dist_rot])
 
-        index_NV = Slam.label.find("NV_")
-        if Slam.label[index_NV+3] == "0":
-            StatOrDyn = "static"
-        else:
-            StatOrDyn = "dynamic"
-        print("RMSE RPE/distance for {} {} is:\n{} [%] translational error \n{} [deg/m] rotational error".format(Slam.method,
-                                                                                                StatOrDyn,
-                                                                                                Slam.RPE_RMSE_dist[0],
-                                                                                                Slam.RPE_RMSE_dist[1]))
+        # index_NV = Slam.label.find("NV_")
+        # if Slam.label[index_NV+3] == "0":
+        #     StatOrDyn = "static"
+        # else:
+        #     StatOrDyn = "dynamic"
+        # print("RMSE RPE/distance for {} {} is:\n{} [%] translational error \n{} [deg/m] rotational error".format(Slam.method,
+        #                                                                                         StatOrDyn,
+        #                                                                                         Slam.RPE_RMSE_dist[0],
+        #                                                                                         Slam.RPE_RMSE_dist[1]))
 
         # print("Std Deviation RPE/distance for {} {} is:\n{} [%] translational error \n{} [deg/m] rotational error".format(Slam.method,
         #                                                                                                     StatOrDyn,

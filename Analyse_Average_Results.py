@@ -53,16 +53,18 @@ with ScenarioProcessor(flocation=flocation, SL=40, NV=40) as SP:
 
 print("encountered vehicles processed")
 
-
+plt.rcParams['axes.grid'] = True
 # compare their poses over time
-# methods = [AverageStatic, AverageDynamic]
-# compare_position(methods)
-# compare_euler_angles(methods)
+methods = [AverageStatic, AverageDynamic]
+compare_position(methods)
+compare_euler_angles(methods)
 # compare_quaternions(methods)
 # evaluate RPE over time
 GT = [gt_static, gt_dyn]
 SLAM = [AverageStatic, AverageDynamic]
 time_RPE = 1.0
 evaluate_RPE_time(GT, SLAM, time_RPE, encountered_vehicles)
+# evaluate_RPE_time(GT, SLAM, time_RPE)
+evaluate_RPE_dist(GT, SLAM, eva_dist=50)
 
 plt.show()

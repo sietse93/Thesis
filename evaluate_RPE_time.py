@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 import tf
 from pyquaternion import Quaternion
 import math
+from plot_encountered_vehicles import *
 
 
 def evaluate_RPE_time(GT, SLAM, time_step=float, *args):
@@ -197,14 +198,17 @@ def evaluate_RPE_time(GT, SLAM, time_step=float, *args):
         plt.figure("RPE over time")
         plt.subplot(3, 1, 1)
         plt.plot(Slam.timeQ1Q2, RPEx, Slam.plotstyle, label=Slam.label)
+        plot_vehicles_encountered(args[0])
         plt.xlabel("time [s]")
         plt.ylabel("RPE x [m]")
         plt.subplot(3, 1, 2)
         plt.plot(Slam.timeQ1Q2, RPEy, Slam.plotstyle, label=Slam.label)
+        plot_vehicles_encountered(args[0])
         plt.xlabel("time [s]")
         plt.ylabel("RPE y [m]")
         plt.subplot(3, 1, 3)
         plt.plot(Slam.timeQ1Q2, RPEz, Slam.plotstyle, label=Slam.label)
+        plot_vehicles_encountered(args[0])
         plt.xlabel("time [s]")
         plt.ylabel("RPE z [m]")
         plt.legend()
@@ -212,31 +216,16 @@ def evaluate_RPE_time(GT, SLAM, time_step=float, *args):
         plt.figure("RPE Magnitude over time")
         plt.subplot(2, 1, 1)
         plt.plot(Slam.timeQ1Q2, trans_errs, Slam.plotstyle, label=Slam.label)
+        plot_vehicles_encountered(args[0])
         plt.xlabel("time [s]")
         plt.ylabel("translational error [m/s]")
 
         plt.subplot(2, 1, 2)
         plt.plot(Slam.timeQ1Q2, rot_errs, Slam.plotstyle, label=Slam.label)
+        plot_vehicles_encountered(args[0])
         plt.xlabel("time [s]")
         plt.ylabel("rotational error [deg/s]")
         plt.legend()
-
-    for vehicle in args[0]:
-        msize = 15
-        loc_marker = 1
-        plt.figure("RPE Magnitude over time")
-        plt.subplot(2, 1, 1)
-        plt.axvline(vehicle.begin_time, color=vehicle.color)
-        plt.axvline(vehicle.end_time, color=vehicle.color)
-        plt.plot(vehicle.begin_time, loc_marker, marker=vehicle.marker, label=vehicle.label, markersize=msize, color=vehicle.color)
-        plt.plot(vehicle.end_time, loc_marker, marker=vehicle.marker, label=vehicle.label, markersize=msize, color=vehicle.color)
-        plt.subplot(2, 1, 2)
-        plt.axvline(vehicle.begin_time, color=vehicle.color)
-        plt.axvline(vehicle.end_time, color=vehicle.color)
-        plt.plot(vehicle.begin_time, loc_marker, marker=vehicle.marker, label=vehicle.label, markersize=msize, color=vehicle.color)
-        plt.plot(vehicle.end_time, loc_marker, marker=vehicle.marker, label=vehicle.label, markersize=msize, color=vehicle.color)
-
-
 
 
 def main():
