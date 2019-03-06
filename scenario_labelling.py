@@ -328,7 +328,5 @@ def main():
         # encountered_vehicle = SP.scenario_creator(hero, encountered_vehicles[0:3])
 
 
-
-
 if __name__ == "__main__":
     main()

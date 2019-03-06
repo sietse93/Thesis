@@ -6,7 +6,7 @@ from pyquaternion import Quaternion
 import math
 
 
-def evaluate_RPE_time(GT, SLAM, time_step=float, encountered_vehicles=[]):
+def evaluate_RPE_time(GT, SLAM, time_step=float, *args):
     """Input a list of CarlaSlamEvaluate ground truths and a list of CarlaSlamEvaluate SLAM pose estimations.
     Optional, plot the encountered vehicles in the plots"""
 
@@ -221,7 +221,7 @@ def evaluate_RPE_time(GT, SLAM, time_step=float, encountered_vehicles=[]):
         plt.ylabel("rotational error [deg/s]")
         plt.legend()
 
-    for vehicle in encountered_vehicles:
+    for vehicle in args[0]:
         msize = 15
         loc_marker = 1
         plt.figure("RPE Magnitude over time")
