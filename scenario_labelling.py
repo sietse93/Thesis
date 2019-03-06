@@ -5,6 +5,7 @@ stopping vehicle other lane. This code should assist in understanding the data f
 """
 import numpy as np
 import math
+import string
 
 
 class ScenarioProcessor:
@@ -251,6 +252,12 @@ class ScenarioProcessor:
                         old_scenario = new_scenario
         return encountered_vehicles
 
+    def vehicle_labeling(self, list_encountered_vehicles):
+        alphabet = list(string.ascii_letters)
+        for index, vehicle in enumerate(list_encountered_vehicles):
+            vehicle.label = alphabet[index]
+        return list_encountered_vehicles
+
 
 class Vehicle:
     """"A vehicle spawned in the CARLA"""
@@ -282,6 +289,7 @@ class EncounteredVehicle(Vehicle):
 
         # temporary scenario list
         self.scenario_list = []
+        self.label = ''
 
 
 class Scenario:
@@ -299,10 +307,13 @@ def main():
         dynamic_agents = SP.process_dynamic_agents()
         hero = SP.process_hero()
         encountered_vehicles = SP.encountered_vehicles_filter(hero, dynamic_agents)
-        plot_data = []
+        SP.vehicle_labeling(encountered_vehicles)
+
+        # plot_data = []
         for encountered_vehicle in encountered_vehicles:
-            plot_data.append([encountered_vehicle.id, encountered_vehicle.begin_time, encountered_vehicle.end_time])
-        print(plot_data)
+            print(encountered_vehicle.label)
+        #     plot_data.append([encountered_vehicle.id, encountered_vehicle.begin_time, encountered_vehicle.end_time])
+        # print(plot_data)
         # encountered_vehicle = SP.scenario_creator(hero, encountered_vehicles[0:3])
 
 
