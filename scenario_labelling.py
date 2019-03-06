@@ -254,8 +254,15 @@ class ScenarioProcessor:
 
     def vehicle_labeling(self, list_encountered_vehicles):
         alphabet = list(string.ascii_letters)
+        color_code = 0
         for index, vehicle in enumerate(list_encountered_vehicles):
             vehicle.label = alphabet[index]
+            vehicle.marker = "${}$".format(alphabet[index])
+            vehicle.color = "C{}".format(color_code)
+            if color_code == 9:
+                color_code = 0
+            else:
+                color_code = color_code + 1
         return list_encountered_vehicles
 
 
@@ -289,7 +296,11 @@ class EncounteredVehicle(Vehicle):
 
         # temporary scenario list
         self.scenario_list = []
-        self.label = ''
+
+        # plot characteristics
+        self.label = ""
+        self.marker = ""
+        self.color = ''
 
 
 class Scenario:

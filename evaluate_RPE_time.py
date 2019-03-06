@@ -6,8 +6,9 @@ from pyquaternion import Quaternion
 import math
 
 
-def evaluate_RPE_time(GT, SLAM, time_step=float):
-    """Input a list of CarlaSlamEvaluate ground truths and a list of CarlaSlamEvaluate SLAM pose estimations"""
+def evaluate_RPE_time(GT, SLAM, time_step=float, encountered_vehicles=[]):
+    """Input a list of CarlaSlamEvaluate ground truths and a list of CarlaSlamEvaluate SLAM pose estimations.
+    Optional, plot the encountered vehicles in the plots"""
 
     # Check if every method has a ground truth
     if len(GT) != len(SLAM):
@@ -219,6 +220,22 @@ def evaluate_RPE_time(GT, SLAM, time_step=float):
         plt.xlabel("time [s]")
         plt.ylabel("rotational error [deg/s]")
         plt.legend()
+
+    for vehicle in encountered_vehicles:
+        msize = 15
+        loc_marker = 1
+        plt.figure("RPE Magnitude over time")
+        plt.subplot(2, 1, 1)
+        plt.axvline(vehicle.begin_time, color=vehicle.color)
+        plt.axvline(vehicle.end_time, color=vehicle.color)
+        plt.plot(vehicle.begin_time, loc_marker, marker=vehicle.marker, label=vehicle.label, markersize=msize, color=vehicle.color)
+        plt.plot(vehicle.end_time, loc_marker, marker=vehicle.marker, label=vehicle.label, markersize=msize, color=vehicle.color)
+        plt.subplot(2, 1, 2)
+        plt.axvline(vehicle.begin_time, color=vehicle.color)
+        plt.axvline(vehicle.end_time, color=vehicle.color)
+        plt.plot(vehicle.begin_time, loc_marker, marker=vehicle.marker, label=vehicle.label, markersize=msize, color=vehicle.color)
+        plt.plot(vehicle.end_time, loc_marker, marker=vehicle.marker, label=vehicle.label, markersize=msize, color=vehicle.color)
+
 
 
 
