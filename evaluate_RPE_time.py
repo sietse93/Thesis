@@ -19,6 +19,7 @@ def evaluate_RPE_time(GT, SLAM, time_step=float):
     for gt, Slam in zip(GT, SLAM):
         RPE = []
         time_debug = []
+        time_inter_debug = []
         Q1Q2_debug = []
 
         trans_errs = []
@@ -37,7 +38,6 @@ def evaluate_RPE_time(GT, SLAM, time_step=float):
 
                 try:
                     Q2 = Slam.Q[Slam.time.index(round(time+time_step, 3))]  # add time_step if it doesnt exist it gets a ValueError
-
                 except ValueError:
                     # if time step does not work, find the closest timestamp that is bigger than the time step
                     temp_index = time_index+1
@@ -69,7 +69,10 @@ def evaluate_RPE_time(GT, SLAM, time_step=float):
                     Q2[2][3] = position_inter[2]
 
                     # some debug variables that allows you to visualize the linear interpolated data
+                    # time to check the interpolated data for Q1Q2
                     time_debug.append(time)
+                    # time to check the interpolated pose (position and quaternions)
+                    time_inter_debug.append(time+1)
                     Q1Q2_debug.append(Q1_inv.dot(Q2))
 
                 Q1Q2_i = Q1_inv.dot(Q2)
@@ -101,94 +104,94 @@ def evaluate_RPE_time(GT, SLAM, time_step=float):
                 rot_err = math.acos(max(min(d, 1), -1))/time_step  # guarantees value between -1 and 1
                 rot_errs.append(math.degrees(rot_err))
 
-        # check if the interpolated position makes sense
-        inter_x = [position[0] for position in pos_debug_inter]
-        inter_y = [position[1] for position in pos_debug_inter]
-        inter_z = [position[2] for position in pos_debug_inter]
-
-        x = [position[0] for position in Slam.positions]
-        y = [position[1] for position in Slam.positions]
-        z = [position[2] for position in Slam.positions]
-
-        plt.figure("interpolated position")
-        plt.subplot(3, 1, 1)
-        plt.plot(time_debug, inter_x, 'x')
-        plt.plot(Slam.time, x)
-
-        plt.subplot(3, 1, 2)
-        plt.plot(time_debug, inter_y, 'x')
-        plt.plot(Slam.time, y)
-
-        plt.subplot(3, 1, 3)
-        plt.plot(time_debug, inter_z, 'x')
-        plt.plot(Slam.time, z)
-
-        inter_q1 = [quaternion[0] for quaternion in quaternion_debug_inter]
-        inter_q2 = [quaternion[1] for quaternion in quaternion_debug_inter]
-        inter_q3 = [quaternion[2] for quaternion in quaternion_debug_inter]
-        inter_q4 = [quaternion[3] for quaternion in quaternion_debug_inter]
-
-        q1 = [quaternion[0] for quaternion in Slam.quaternions]
-        q2 = [quaternion[1] for quaternion in Slam.quaternions]
-        q3 = [quaternion[2] for quaternion in Slam.quaternions]
-        q4 = [quaternion[3] for quaternion in Slam.quaternions]
-
-        plt.figure("interpolated quaternions")
-        plt.subplot(4, 1, 1)
-        plt.plot(time_debug, inter_q1, 'x', label="interpolated")
-        plt.plot(Slam.time, q1, label=Slam.label)
-
-        plt.subplot(4, 1, 2)
-        plt.plot(time_debug, inter_q2, 'x', label="interpolated")
-        plt.plot(Slam.time, q2, label=Slam.label)
-
-        plt.subplot(4, 1, 3)
-        plt.plot(time_debug, inter_q3, 'x', label="interpolated")
-        plt.plot(Slam.time, q3, label=Slam.label)
-
-        plt.subplot(4, 1, 4)
-        plt.plot(time_debug, inter_q4, 'x', label="interpolated")
-        plt.plot(Slam.time, q4, label=Slam.label)
-        plt.legend()
-
+        # # check if the interpolated position makes sense
+        # inter_x = [position[0] for position in pos_debug_inter]
+        # inter_y = [position[1] for position in pos_debug_inter]
+        # inter_z = [position[2] for position in pos_debug_inter]
+        #
+        # x = [position[0] for position in Slam.positions]
+        # y = [position[1] for position in Slam.positions]
+        # z = [position[2] for position in Slam.positions]
+        #
+        # plt.figure("interpolated position")
+        # plt.subplot(3, 1, 1)
+        # plt.plot(time_inter_debug, inter_x, 'x')
+        # plt.plot(Slam.time, x)
+        #
+        # plt.subplot(3, 1, 2)
+        # plt.plot(time_inter_debug, inter_y, 'x')
+        # plt.plot(Slam.time, y)
+        #
+        # plt.subplot(3, 1, 3)
+        # plt.plot(time_inter_debug, inter_z, 'x')
+        # plt.plot(Slam.time, z)
+        #
+        # inter_q1 = [quaternion[0] for quaternion in quaternion_debug_inter]
+        # inter_q2 = [quaternion[1] for quaternion in quaternion_debug_inter]
+        # inter_q3 = [quaternion[2] for quaternion in quaternion_debug_inter]
+        # inter_q4 = [quaternion[3] for quaternion in quaternion_debug_inter]
+        #
+        # q1 = [quaternion[0] for quaternion in Slam.quaternions]
+        # q2 = [quaternion[1] for quaternion in Slam.quaternions]
+        # q3 = [quaternion[2] for quaternion in Slam.quaternions]
+        # q4 = [quaternion[3] for quaternion in Slam.quaternions]
+        #
+        # plt.figure("interpolated quaternions")
+        # plt.subplot(4, 1, 1)
+        # plt.plot(time_inter_debug, inter_q1, 'x', label="interpolated")
+        # plt.plot(Slam.time, q1, label=Slam.label)
+        #
+        # plt.subplot(4, 1, 2)
+        # plt.plot(time_inter_debug, inter_q2, 'x', label="interpolated")
+        # plt.plot(Slam.time, q2, label=Slam.label)
+        #
+        # plt.subplot(4, 1, 3)
+        # plt.plot(time_inter_debug, inter_q3, 'x', label="interpolated")
+        # plt.plot(Slam.time, q3, label=Slam.label)
+        #
+        # plt.subplot(4, 1, 4)
+        # plt.plot(time_inter_debug, inter_q4, 'x', label="interpolated")
+        # plt.plot(Slam.time, q4, label=Slam.label)
+        # plt.legend()
+        #
         RPEx = [matrix[0][3] for matrix in RPE]
         RPEy = [matrix[1][3] for matrix in RPE]
         RPEz = [matrix[2][3] for matrix in RPE]
-
-        Q1Q2x = [matrix[0][3] for matrix in Slam.Q1Q2]
-        Q1Q2y = [matrix[1][3] for matrix in Slam.Q1Q2]
-        Q1Q2z = [matrix[2][3] for matrix in Slam.Q1Q2]
-
-        Q1Q2gtx = [matrix[0][3] for matrix in gt.Q1Q2]
-        Q1Q2gty = [matrix[1][3] for matrix in gt.Q1Q2]
-        Q1Q2gtz = [matrix[2][3] for matrix in gt.Q1Q2]
-
-        Q1Q2_debugx = [matrix[0][3] for matrix in Q1Q2_debug]
-        Q1Q2_debugy = [matrix[1][3] for matrix in Q1Q2_debug]
-        Q1Q2_debugz = [matrix[2][3] for matrix in Q1Q2_debug]
-
-        plt.figure("Q1Q2")
-        plt.subplot(3, 1, 1)
-        plt.plot(gt.timeQ1Q2, Q1Q2gtx, label=gt.label)
-        plt.plot(Slam.timeQ1Q2, Q1Q2x, label=Slam.label)
-        plt.xlabel("Time [s]")
-        plt.ylabel("Change in pose x [m]")
-        plt.plot(time_debug, Q1Q2_debugx, 'o', label='linear interpolated')
-
-        plt.subplot(3, 1, 2)
-        plt.plot(gt.timeQ1Q2, Q1Q2gty, label=gt.label)
-        plt.plot(Slam.timeQ1Q2, Q1Q2y, label=Slam.label)
-        plt.xlabel("Time [s]")
-        plt.ylabel("Change in pose y [m]")
-        plt.plot(time_debug, Q1Q2_debugy, 'o', label='linear interpolated')
-
-        plt.subplot(3, 1, 3)
-        plt.plot(gt.timeQ1Q2, Q1Q2gtz, label=gt.label)
-        plt.plot(Slam.timeQ1Q2, Q1Q2z, label=Slam.label)
-        plt.xlabel("Time [s]")
-        plt.ylabel("Change in pose z [m]")
-        plt.plot(time_debug, Q1Q2_debugz, 'o', label='linear interpolated')
-        plt.legend()
+        #
+        # Q1Q2x = [matrix[0][3] for matrix in Slam.Q1Q2]
+        # Q1Q2y = [matrix[1][3] for matrix in Slam.Q1Q2]
+        # Q1Q2z = [matrix[2][3] for matrix in Slam.Q1Q2]
+        #
+        # Q1Q2gtx = [matrix[0][3] for matrix in gt.Q1Q2]
+        # Q1Q2gty = [matrix[1][3] for matrix in gt.Q1Q2]
+        # Q1Q2gtz = [matrix[2][3] for matrix in gt.Q1Q2]
+        #
+        # Q1Q2_debugx = [matrix[0][3] for matrix in Q1Q2_debug]
+        # Q1Q2_debugy = [matrix[1][3] for matrix in Q1Q2_debug]
+        # Q1Q2_debugz = [matrix[2][3] for matrix in Q1Q2_debug]
+        #
+        # plt.figure("Q1Q2")
+        # plt.subplot(3, 1, 1)
+        # plt.plot(gt.timeQ1Q2, Q1Q2gtx, label=gt.label)
+        # plt.plot(Slam.timeQ1Q2, Q1Q2x, label=Slam.label)
+        # plt.xlabel("Time [s]")
+        # plt.ylabel("Change in pose x [m]")
+        # plt.plot(time_debug, Q1Q2_debugx, 'o', label='linear interpolated')
+        #
+        # plt.subplot(3, 1, 2)
+        # plt.plot(gt.timeQ1Q2, Q1Q2gty, label=gt.label)
+        # plt.plot(Slam.timeQ1Q2, Q1Q2y, label=Slam.label)
+        # plt.xlabel("Time [s]")
+        # plt.ylabel("Change in pose y [m]")
+        # plt.plot(time_debug, Q1Q2_debugy, 'o', label='linear interpolated')
+        #
+        # plt.subplot(3, 1, 3)
+        # plt.plot(gt.timeQ1Q2, Q1Q2gtz, label=gt.label)
+        # plt.plot(Slam.timeQ1Q2, Q1Q2z, label=Slam.label)
+        # plt.xlabel("Time [s]")
+        # plt.ylabel("Change in pose z [m]")
+        # plt.plot(time_debug, Q1Q2_debugz, 'o', label='linear interpolated')
+        # plt.legend()
 
         plt.figure("RPE over time")
         plt.subplot(3, 1, 1)
@@ -229,7 +232,7 @@ def main():
 
     method_orb = "orb"
     orb_ps_static = 'g-'
-    orb_file_static = "/home/sietse/official_experiment_data/SL_40_NV_0_SV_1_orb_1.txt"
+    orb_file_static = "/home/sietse/official_experiment_data/SL_40_NV_0_SV_1_orb_2.txt"
     # orb_file_static = "/home/sietse/PrelimExpStaticVsDynamic/SL_58_NV_0_SV_1_orb.txt"
 
     with CarlaSlamEvaluate(method_orb, orb_file_static, orb_ps_static) as orb_static:
