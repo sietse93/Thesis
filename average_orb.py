@@ -58,7 +58,7 @@ def average_orb(SLAM, timestep, label, plotstyle):
                 # print(Slam.flocation, cur_time)
                 continue
         # if there is data, take the average
-        if n_avg > 4:
+        if n_avg == len(SLAM):
             average_position = position/n_avg
             AverageSlam.positions.append(average_position)
 

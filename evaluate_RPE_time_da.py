@@ -7,7 +7,7 @@ import math
 from plot_encountered_vehicles import *
 
 
-def evaluate_RPE_time(GT, SLAM, time_step=float):
+def evaluate_RPE_time_da(GT, SLAM, time_step=float, *args):
     """Input a list of CarlaSlamEvaluate ground truths and a list of CarlaSlamEvaluate SLAM pose estimations.
     Optional, plot the encountered vehicles in the plots"""
 
@@ -212,18 +212,21 @@ def evaluate_RPE_time(GT, SLAM, time_step=float):
         # plt.xlabel("time [s]")
         # plt.ylabel("RPE z [m]")
         # plt.legend()
-        if len(SLAM) > 2:
-            figure_string = "RPE Magnitude over time, all ORB"
-        else:
-            figure_string = "RPE Magnitude over time, average ORB"
-        plt.figure(figure_string)
+
+        trans_debug = [trans_errs[Slam.timeQ1Q2.index(time)] for time in time_debug]
+        rot_debug = [rot_errs[Slam.timeQ1Q2.index(time)] for time in time_debug]
+        plt.figure("RPE Magnitude over time")
         plt.subplot(2, 1, 1)
         plt.plot(Slam.timeQ1Q2, trans_errs, Slam.plotstyle, label=Slam.label)
+        plt.plot(time_debug, trans_debug, 'kx', label="interpolated data")
+        plot_vehicles_encountered(args[0])
         plt.xlabel("time [s]")
         plt.ylabel("translational error [m/s]")
 
         plt.subplot(2, 1, 2)
         plt.plot(Slam.timeQ1Q2, rot_errs, Slam.plotstyle, label=Slam.label)
+        plt.plot(time_debug, rot_debug, 'kx', label="interpolated data")
+        plot_vehicles_encountered(args[0])
         plt.xlabel("time [s]")
         plt.ylabel("rotational error [deg/s]")
         plt.legend()

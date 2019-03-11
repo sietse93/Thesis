@@ -58,7 +58,8 @@ class CarlaSlamEvaluate(object):
         index_start = self.flocation.find("SL")
 
         # label = NameOfMethod_SL_{}_NV_{}
-        self.label = self.method + "_" + self.flocation[index_start:(index_start+11)]
+        # self.label = self.method + "_" + self.flocation[index_start:(index_start+11)]
+        self.label = self.method + "_" + self.flocation[index_start:-4]
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):

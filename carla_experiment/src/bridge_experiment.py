@@ -29,7 +29,10 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
         self.dist_exp = distance_experiment
 
         # This will contain the control data which is either written or read
+        # control_data will be a file that will be rewritten every time
+        # control_data log will only be unique
         self.control_data = {}
+        self.control_data_log = {}
 
         # This will contain the id, timestamp, location of dynamic agents
         # Note this will only be used when autopilot is on
@@ -62,6 +65,10 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
             SeedPedestrians=params.get('SeedPedestrians', 123456789),
             DisableTwoWheeledVehicles=params.get('DisableTwoWheeledVehicles', True)
         )
+
+    def on_shutdown(self):
+        rospy.loginfo("Shutdown requested")
+        os.system("rosnode kill /carla_client")
 
     def run(self):
 
@@ -120,6 +127,7 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
                                                                     control.hand_brake,
                                                                     control.reverse)
                 self.control_data.write(control_log_line)
+                self.control_data_log.write(control_log_line)
                 self.client.send_control(control)
 
                 # log location all dynamic agents for situation labeling
@@ -198,6 +206,7 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
         # It is difficult to specify which autopilot needs to be used (could be set in a launch file though...)
         if rospy.get_param('carla_autopilot', True):
             self.control_data = open(home_user + "/control.txt", 'w')
+            self.control_data_log = open(filename + "_control.txt", 'w')
             self.da_data = open(filename + "_da.txt", 'w')
             rospy.loginfo("Opened control and dynamic agents file to write")
         else:
@@ -212,8 +221,12 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.control_data.close()
-        self.da_data.close()
-        rospy.loginfo("Closed control and dynamic agent file")
+        rospy.loginfo("Closed control file")
+        if rospy.get_param('carla_autopilot', True):
+            self.da_data.close()
+            self.control_data_log.close()
+            rospy.loginfo("Close dynamic agent file")
+
 
         if rospy.get_param('log_gt', True):
             self.gt_data.close()
