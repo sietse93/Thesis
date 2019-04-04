@@ -86,6 +86,7 @@ class ScenarioProcessor:
             y = round(float(line_data[2]), 2)
             hero.heading.append(round(float(line_data[6]), 0))
             hero.data.append([time_stamp, x, y])
+            hero.time.append(time_stamp)
 
         return hero
 
@@ -172,6 +173,11 @@ class ScenarioProcessor:
         for encountered_vehicle in encountered_vehicles:
             final_encounter_time = encountered_vehicle.encounter_data[-1][0]
             encountered_vehicle.end_time = final_encounter_time
+
+        # remove any vehicle that is encountered for one timestamp
+        for encountered_vehicle in encountered_vehicles:
+            if len(encountered_vehicle.encounter_data) <= 1:
+                encountered_vehicles.remove(encountered_vehicle)
 
         return encountered_vehicles
 

@@ -9,10 +9,10 @@ from average_orb import *
 from scenario_labelling import ScenarioProcessor
 
 ## convert all orb data and gt data
-
+file_loc = "/home/sietse/official_experiment_data/bypass/"
 # file locations
-file_string_static = "/home/sietse/official_experiment_data/bp_SL_20_NV_0_SV_1_orb_{}.txt"
-file_string_dynamic = "/home/sietse/official_experiment_data/SL_20_NV_40_SV_1_orb_{}.txt"
+file_string_static = file_loc +"bp_SL_20_NV_0_SV_1_orb_{}.txt"
+file_string_dynamic = file_loc +"bp_SL_20_NV_40_SV_1_orb_{}.txt"
 file_gt_dyn = "/home/sietse/official_experiment_data/SL_20_NV_40_SV_1_gt.txt"
 file_gt_stat = "/home/sietse/official_experiment_data/SL_20_NV_0_SV_1_gt.txt"
 
@@ -42,18 +42,10 @@ with CarlaSlamEvaluate("gt", file_gt_dyn, 'k--') as gt_dyn:
     gt_dyn.process_data()
 
 gt_list = []
-# for i in range(5):
-#     gt_list.append(gt_static)
-#     gt_list.append(gt_dyn)
 
 plt.rcParams['axes.grid'] = True
 # Analyze the data and see if some orb data influences the performance too much. Remove these orb data
-#for i in range(1):
-orb_static_objects.pop(0)
 orb_dynamic_objects.pop(0)
-orb_static_objects.pop(0)
-orb_dynamic_objects.pop(0)
-l_orb = len(orb_dynamic_objects)
 orb_all = []
 for obj in orb_static_objects:
     orb_all.append(obj)
@@ -85,15 +77,11 @@ print("encountered vehicles processed")
 
 # compare their poses over time
 methods = [AverageStatic, AverageDynamic]
-compare_position(methods)
-compare_euler_angles(methods)
-# compare_quaternions(methods)
 # evaluate RPE over time
 GT = [gt_static, gt_dyn]
 SLAM = [AverageStatic, AverageDynamic]
 time_RPE = 1.0
 evaluate_RPE_time_da(GT, SLAM, time_RPE, encountered_vehicles)
-# evaluate_RPE_time(GT, SLAM, time_RPE)
-# # # evaluate_RPE_dist(GT, SLAM, eva_dist=50)
+evaluate_RPE_dist(GT, SLAM, eva_dist=100)
 #
 plt.show()

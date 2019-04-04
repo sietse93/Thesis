@@ -85,7 +85,7 @@ def evaluate_RPE_dist(GT, SLAM, eva_dist=float):
                 RPE_z_i = RPE_i[2][3]
                 RPE_z.append(RPE_z_i)
                 trans_err = math.sqrt(RPE_x_i ** 2 + RPE_y_i ** 2 + RPE_z_i ** 2) / eva_dist
-                trans_errs.append(trans_err)
+                trans_errs.append(trans_err*100)  # trans_err is now a ratio, multiply by 100 for percentage
 
                 # Calculate magnitude of angle and normalize to distance
                 a = RPE_i[0][0]  # roll
@@ -93,7 +93,7 @@ def evaluate_RPE_dist(GT, SLAM, eva_dist=float):
                 c = RPE_i[2][2]  # yaw
                 d = 0.5 * (a + b + c - 1)
 
-                rot_err = math.acos(max(min(d, 1), -1)) / eva_dist
+                rot_err = math.degrees(math.acos(max(min(d, 1), -1))) / eva_dist
 
                 rot_errs.append(rot_err)
                 RPE.append(RPE_i)
@@ -112,31 +112,29 @@ def evaluate_RPE_dist(GT, SLAM, eva_dist=float):
         #     StatOrDyn = "static"
         # else:
         #     StatOrDyn = "dynamic"
-        # print("RMSE RPE/distance for {} {} is:\n{} [%] translational error \n{} [deg/m] rotational error".format(Slam.method,
-        #                                                                                         StatOrDyn,
-        #                                                                                         Slam.RPE_RMSE_dist[0],
-        #                                                                                         Slam.RPE_RMSE_dist[1]))
+        print("RMSE RPE/distance for {} is:\n{} [%] translational error \n{} [deg/ m] rotational error".format(Slam.label,
+                                                                                                Slam.RPE_RMSE_dist[0],
+                                                                                                Slam.RPE_RMSE_dist[1]))
 
-        # print("Std Deviation RPE/distance for {} {} is:\n{} [%] translational error \n{} [deg/m] rotational error".format(Slam.method,
-        #                                                                                                     StatOrDyn,
+        # print("Std Deviation RPE/distance for {} is:\n{} [%] translational error \n{} [deg/m] rotational error".format(Slam.label,
         #                                                                                                     Slam.RPE_dist_stddev[0],
         #                                                                                                     Slam.RPE_dist_stddev[1]))
-        plt.figure("RPE translational error over distance dissected")
-        plt.subplot(3, 1, 1)
-        plt.plot(time_used, RPE_x, Slam.plotstyle, label=Slam.label)
-        plt.xlabel("time [s]")
-        plt.ylabel("translational error x [%] ")
-
-        plt.subplot(3, 1, 2)
-        plt.plot(time_used, RPE_y, Slam.plotstyle, label=Slam.label)
-        plt.xlabel("time [s]")
-        plt.ylabel("translational error y [%] ")
-
-        plt.subplot(3, 1, 3)
-        plt.plot(time_used, RPE_z, Slam.plotstyle, label=Slam.label)
-        plt.xlabel("time [s]")
-        plt.ylabel("translational error z [%] ")
-        plt.legend()
+        # plt.figure("RPE translational error over distance dissected")
+        # plt.subplot(3, 1, 1)
+        # plt.plot(time_used, RPE_x, Slam.plotstyle, label=Slam.label)
+        # plt.xlabel("time [s]")
+        # plt.ylabel("translational error x [%] ")
+        #
+        # plt.subplot(3, 1, 2)
+        # plt.plot(time_used, RPE_y, Slam.plotstyle, label=Slam.label)
+        # plt.xlabel("time [s]")
+        # plt.ylabel("translational error y [%] ")
+        #
+        # plt.subplot(3, 1, 3)
+        # plt.plot(time_used, RPE_z, Slam.plotstyle, label=Slam.label)
+        # plt.xlabel("time [s]")
+        # plt.ylabel("translational error z [%] ")
+        # plt.legend()
 
         plt.figure("RPE Magnitude over distance")
         plt.subplot(2, 1, 1)

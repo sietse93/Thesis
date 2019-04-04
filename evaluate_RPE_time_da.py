@@ -41,41 +41,42 @@ def evaluate_RPE_time_da(GT, SLAM, time_step=float, *args):
                 try:
                     Q2 = Slam.Q[Slam.time.index(round(time+time_step, 3))]  # add time_step if it doesnt exist it gets a ValueError
                 except ValueError:
-                    # if time step does not work, find the closest timestamp that is bigger than the time step
-                    temp_index = time_index+1
-                    time2 = Slam.time[temp_index]
-                    while time2 < time + time_step:
-                        temp_index = temp_index + 1
-                        time2 = Slam.time[temp_index]
-
-                    # use this data to linear interpolate the position
-                    position1 = np.asarray(Slam.positions[time_index])
-                    position2 = np.asarray(Slam.positions[temp_index])
-                    # interpolated position
-                    position_inter = time_step*(position2 - position1)/(time2-time)+position1
-                    pos_debug_inter.append(position_inter)
-
-                    # use Slerp technique to linear interpolate the rotations
-                    q1 = Quaternion(Slam.quaternions[time_index])
-                    q2 = Quaternion(Slam.quaternions[temp_index])
-                    time_inter = time_step/(time2-time)
-                    q = Quaternion.slerp(q1, q2, time_inter)
-                    # interpolated quaternion
-                    q_inter = [q[0], q[1], q[2], q[3]]
-                    quaternion_debug_inter.append(q_inter)
-
-                    # the interpolated homegeneous coordinate matrix
-                    Q2 = tf.transformations.quaternion_matrix(q_inter)
-                    Q2[0][3] = position_inter[0]
-                    Q2[1][3] = position_inter[1]
-                    Q2[2][3] = position_inter[2]
-
-                    # some debug variables that allows you to visualize the linear interpolated data
-                    # time to check the interpolated data for Q1Q2
-                    time_debug.append(time)
-                    # time to check the interpolated pose (position and quaternions)
-                    time_inter_debug.append(time+1)
-                    Q1Q2_debug.append(Q1_inv.dot(Q2))
+                    continue
+                    # # if time step does not work, find the closest timestamp that is bigger than the time step
+                    # temp_index = time_index+1
+                    # time2 = Slam.time[temp_index]
+                    # while time2 < time + time_step:
+                    #     temp_index = temp_index + 1
+                    #     time2 = Slam.time[temp_index]
+                    #
+                    # # use this data to linear interpolate the position
+                    # position1 = np.asarray(Slam.positions[time_index])
+                    # position2 = np.asarray(Slam.positions[temp_index])
+                    # # interpolated position
+                    # position_inter = time_step*(position2 - position1)/(time2-time)+position1
+                    # pos_debug_inter.append(position_inter)
+                    #
+                    # # use Slerp technique to linear interpolate the rotations
+                    # q1 = Quaternion(Slam.quaternions[time_index])
+                    # q2 = Quaternion(Slam.quaternions[temp_index])
+                    # time_inter = time_step/(time2-time)
+                    # q = Quaternion.slerp(q1, q2, time_inter)
+                    # # interpolated quaternion
+                    # q_inter = [q[0], q[1], q[2], q[3]]
+                    # quaternion_debug_inter.append(q_inter)
+                    #
+                    # # the interpolated homegeneous coordinate matrix
+                    # Q2 = tf.transformations.quaternion_matrix(q_inter)
+                    # Q2[0][3] = position_inter[0]
+                    # Q2[1][3] = position_inter[1]
+                    # Q2[2][3] = position_inter[2]
+                    #
+                    # # some debug variables that allows you to visualize the linear interpolated data
+                    # # time to check the interpolated data for Q1Q2
+                    # time_debug.append(time)
+                    # # time to check the interpolated pose (position and quaternions)
+                    # time_inter_debug.append(time+1)
+                    # Q1Q2_debug.append(Q1_inv.dot(Q2))
 
                 Q1Q2_i = Q1_inv.dot(Q2)
                 Slam.Q1Q2.append(Q1Q2_i)
@@ -103,7 +104,7 @@ def evaluate_RPE_time_da(GT, SLAM, time_step=float, *args):
                 c = RPE_i[2][2]  # yaw
                 d = 0.5*(a+b+c-1)
 
-                rot_err = math.acos(max(min(d, 1), -1))/time_step  # guarantees value between -1 and 1
+                rot_err = math.degrees(math.acos(max(min(d, 1), -1)))/time_step  # guarantees value between -1 and 1
                 rot_errs.append(math.degrees(rot_err))
 
         # # check if the interpolated position makes sense
@@ -213,19 +214,19 @@ def evaluate_RPE_time_da(GT, SLAM, time_step=float, *args):
         # plt.ylabel("RPE z [m]")
         # plt.legend()
 
-        trans_debug = [trans_errs[Slam.timeQ1Q2.index(time)] for time in time_debug]
-        rot_debug = [rot_errs[Slam.timeQ1Q2.index(time)] for time in time_debug]
+        # trans_debug = [trans_errs[Slam.timeQ1Q2.index(time)] for time in time_debug]
+        #rot_debug = [rot_errs[Slam.timeQ1Q2.index(time)] for time in time_debug]
         plt.figure("RPE Magnitude over time")
         plt.subplot(2, 1, 1)
         plt.plot(Slam.timeQ1Q2, trans_errs, Slam.plotstyle, label=Slam.label)
-        plt.plot(time_debug, trans_debug, 'kx', label="interpolated data")
+        #plt.plot(time_debug, trans_debug, 'kx', label="interpolated data")
         plot_vehicles_encountered(args[0])
         plt.xlabel("time [s]")
         plt.ylabel("translational error [m/s]")
 
         plt.subplot(2, 1, 2)
         plt.plot(Slam.timeQ1Q2, rot_errs, Slam.plotstyle, label=Slam.label)
-        plt.plot(time_debug, rot_debug, 'kx', label="interpolated data")
+        #plt.plot(time_debug, rot_debug, 'kx', label="interpolated data")
         plot_vehicles_encountered(args[0])
         plt.xlabel("time [s]")
         plt.ylabel("rotational error [deg/s]")

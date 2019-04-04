@@ -7,7 +7,7 @@ import math
 from plot_encountered_vehicles import *
 
 
-def evaluate_RPE_time(GT, SLAM, time_step=float):
+def evaluate_RPE_time_da_colloq(GT, SLAM, time_step=float, *args):
     """Input a list of CarlaSlamEvaluate ground truths and a list of CarlaSlamEvaluate SLAM pose estimations.
     Optional, plot the encountered vehicles in the plots"""
 
@@ -30,7 +30,9 @@ def evaluate_RPE_time(GT, SLAM, time_step=float):
         pos_debug_inter = []
         quaternion_debug_inter = []
 
-        for time in Slam.time:
+        end_time = Slam.time.index(106)
+
+        for time in Slam.time[:end_time]:
             # Evaluate after 2 seconds since the model has to stabilize. Vehicle spawns a couple of meters above ground.
             # Stop evaluating when the time+time_step exceeds the time of the total simulation
             if time > 2 and time < (Slam.time[-1]-time_step):
@@ -42,7 +44,7 @@ def evaluate_RPE_time(GT, SLAM, time_step=float):
                     Q2 = Slam.Q[Slam.time.index(round(time+time_step, 3))]  # add time_step if it doesnt exist it gets a ValueError
                 except ValueError:
                     continue
-                    # if time step does not work, find the closest timestamp that is bigger than the time step
+                    # # if time step does not work, find the closest timestamp that is bigger than the time step
                     # temp_index = time_index+1
                     # time2 = Slam.time[temp_index]
                     # while time2 < time + time_step:
@@ -213,21 +215,17 @@ def evaluate_RPE_time(GT, SLAM, time_step=float):
         # plt.xlabel("time [s]")
         # plt.ylabel("RPE z [m]")
         # plt.legend()
-        if len(SLAM) > 2:
-            figure_string = "RPE Magnitude over time, all ORB"
-        else:
-            figure_string = "RPE Magnitude over time, average ORB"
-        plt.figure(figure_string)
-        plt.subplot(2, 1, 1)
+
+        # trans_debug = [trans_errs[Slam.timeQ1Q2.index(time)] for time in time_debug]
+        #rot_debug = [rot_errs[Slam.timeQ1Q2.index(time)] for time in time_debug]
+        plt.figure("RPE Magnitude over time")
         plt.plot(Slam.timeQ1Q2, trans_errs, Slam.plotstyle, label=Slam.label)
+        #plt.plot(time_debug, trans_debug, 'kx', label="interpolated data")
+        plot_vehicles_encountered(args[0])
+        plt.legend()
         plt.xlabel("time [s]")
         plt.ylabel("translational error [m/s]")
 
-        plt.subplot(2, 1, 2)
-        plt.plot(Slam.timeQ1Q2, rot_errs, Slam.plotstyle, label=Slam.label)
-        plt.xlabel("time [s]")
-        plt.ylabel("rotational error [deg/s]")
-        plt.legend()
 
 
 def main():
