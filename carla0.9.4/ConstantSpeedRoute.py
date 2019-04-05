@@ -30,6 +30,12 @@ try:
 except ImportError:
     import Queue as queue
 
+import math
+# this allows symbolic links from git in the directory
+sys.path.append('/home/sietse/carla/PythonAPI')
+
+import pdb
+
 
 def draw_image(surface, image):
     array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
@@ -59,6 +65,17 @@ def should_quit():
 
 
 def main():
+
+    # input values
+    fps = 10.0
+    speed = 30.0  # in km/h
+    total_distance = 1000 # meters
+
+    # calculate required distance between waypoints to simulate certain speed
+    v = speed/3.6
+    x_step = v*(1/fps)
+
+
     actor_list = []
     pygame.init()
 
@@ -76,6 +93,8 @@ def main():
     settings.synchronous_mode = True
     world.apply_settings(settings)
 
+    debug = world.debug
+
     try:
         # set weather conditions
         world.set_weather(carla.WeatherParameters.ClearNoon)
@@ -92,19 +111,24 @@ def main():
         map = world.get_map()
         # note spawn_points are Transform class not Waypoint class
         spawn_points = map.get_spawn_points()
-        hero_spawn = spawn_points[97]
-
-        waypoint = map.get_waypoint(hero_spawn.location)
+        hero_spawn = spawn_points[96]
 
         # spawn our hero: give blueprint and location:
         hero = world.spawn_actor(prius_bp, hero_spawn)
         # add hero to actor list so it can be destroyed at the end of the session
         actor_list.append(hero)
 
-        # apparently transforming your vehicle only works when the physics = false,
+        # Create a route, set destination and get a list of waypoints to get there
+        # the simplest route planner I can think of
+        begin_waypoint = map.get_waypoint(hero_spawn.location)
+        cur_waypoint = begin_waypoint
+
+        # create waypoints with a certain distance between the waypoints
+        waypoint_list = map.generate_waypoints(x_step)
+
+        # Transforming your vehicle only works when the physics = false,
         # when an image is involved/ pygame is involved
         hero.set_simulate_physics(False)
-
         # Now add a camera to the hero
         # What blueprint should the sensor have?
         camera_bp = bp_lib.find('sensor.camera.rgb')
@@ -112,6 +136,7 @@ def main():
         camera_bp.set_attribute('image_size_x', '600')
         camera_bp.set_attribute('image_size_y', '600')
         camera_bp.set_attribute('fov', '90')
+
         # don't install a sensor tick, it fucks up sync mode.
 
         # Where should the camera be placed on the vehicle (in Transform class)
@@ -128,16 +153,6 @@ def main():
         image_queue = queue.Queue()
         camera.listen(image_queue.put)
 
-        # attach cameras used for stereo vision data
-        camera_left = world.spawn_actor(camera_bp, camera_loc, attach_to=hero)
-        actor_list.append(camera_left)
-        camera_left.listen(lambda picture: picture.save_to_disk('output_test_carla/left/%06d.png' % picture.frame_number))
-
-        camera_loc_right = carla.Transform(carla.Location(x=1.8, y=0.54, z=1.3))
-        camera_right = world.spawn_actor(camera_bp, camera_loc_right, attach_to=hero)
-        actor_list.append(camera_right)
-        camera_right.listen(lambda picture: picture.save_to_disk('output_test_carla/right/%06d.png' % picture.frame_number))
-
         frame = None
         start_frame = None
         frame_skip_counter = 0
@@ -153,13 +168,15 @@ def main():
         # a class that tracks time
         clock = pygame.time.Clock()
 
-        # The infinite loop that allows the simulation
-        while start_frame is None or frame - start_frame < 200:
+        dist_travel = 0
 
+        # The infinite loop that allows the simulation
+        # while start_frame is None or frame - start_frame < 100:
+        while dist_travel < total_distance:
             if should_quit():
                 return
 
-            clock.tick(10)
+            clock.tick(fps)
             world.tick()
             # World needs to wait to get the tick otherwise actors are not destroyed
             ts = world.wait_for_tick()
@@ -171,8 +188,6 @@ def main():
 
             frame = ts.frame_count
 
-            # image = image_queue.get()
-
             while True:
                 image = image_queue.get()
                 if image.frame_number == ts.frame_count:
@@ -180,11 +195,19 @@ def main():
                 print('wrong image time-stampstamp: frame=%d, image.frame=%d',
                         ts.frame_count,
                         image.frame_number)
+
             if start_frame is None:
                 start_frame = frame
 
-            waypoint = random.choice(waypoint.next(1))
-            hero.set_transform(waypoint.transform)
+            next_waypoint = cur_waypoint.next(x_step)[0]
+
+            dx = distance_between_waypoints(cur_waypoint, next_waypoint)
+            dist_travel = dist_travel + dx
+            hero.set_transform(next_waypoint.transform)
+
+            print(dist_travel)
+
+            cur_waypoint = next_waypoint
 
             draw_image(display, image)
 
@@ -204,6 +227,12 @@ def main():
             actor.destroy()
         pygame.quit()
         print('Actors destroyed')
+
+
+def distance_between_waypoints(waypoint1, waypoint2):
+    wp1_loc = waypoint1.transform.location
+    wp2_loc = waypoint2.transform.location
+    return math.sqrt((wp1_loc.x-wp2_loc.x)**2+(wp1_loc.y-wp2_loc.y)**2+(wp1_loc.z-wp2_loc.z)**2)
 
 if __name__ == '__main__':
     try:
