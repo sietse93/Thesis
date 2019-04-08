@@ -63,13 +63,23 @@ def should_quit():
                 return True
     return False
 
-def main():
+
+def main(args):
+    scenario = args[0]
+    print(scenario)
+    print(type(scenario))
+    if scenario != "static" and scenario != "dynamic":
+        print("Argument should be static or dynamic")
+        return
+    else:
+        print("Scenario simulated is {}".format(scenario))
+
 
     # input values
     fps = 10.0
-    speed = 30.0  # in km/h
+    speed = 15.0  # in km/h
     total_distance = 500  # meters
-    dist2van = 7
+    dist2van = 20
 
     # calculate required distance between waypoints to simulate certain speed
     v = speed/3.6
@@ -133,14 +143,15 @@ def main():
         # when an image is involved/ pygame is involved
         hero.set_simulate_physics(False)
 
-        van_bp = bp_lib.find('vehicle.carlamotors.carlacola')
-        van_waypoint = begin_waypoint.next(dist2van)[0]
-        # Note that you cannot change waypoints!! Copy the transforms and use that
-        van_transform = van_waypoint.transform
-        van_transform.location.z += 2.0
-        van = world.spawn_actor(van_bp, van_transform)
-        actor_list.append(van)
-        van.set_simulate_physics(False)
+        if scenario == "dynamic":
+            van_bp = bp_lib.find('vehicle.carlamotors.carlacola')
+            van_waypoint = begin_waypoint.next(dist2van)[0]
+            # Note that you cannot change waypoints!! Copy the transforms and use that
+            van_transform = van_waypoint.transform
+            van_transform.location.z += 2.0
+            van = world.spawn_actor(van_bp, van_transform)
+            actor_list.append(van)
+            van.set_simulate_physics(False)
 
         # Now add a camera to the hero
         # What blueprint should the sensor have?
@@ -167,14 +178,17 @@ def main():
         camera.listen(image_queue.put)
 
         # attach cameras used for stereo vision data
-        # camera_left = world.spawn_actor(camera_bp, camera_loc, attach_to=hero)
-        # actor_list.append(camera_left)
-        # # camera_left.listen(lambda picture: picture.save_to_disk('output_test_carla/left/%06d.png' % picture.frame_number))
-        #
-        # camera_loc_right = carla.Transform(carla.Location(x=1.8, y=0.54, z=1.3))
-        # camera_right = world.spawn_actor(camera_bp, camera_loc_right, attach_to=hero)
-        # actor_list.append(camera_right)
-        # camera_right.listen(lambda picture: picture.save_to_disk('output_test_carla/right/%06d.png' % picture.frame_number))
+        camera_left = world.spawn_actor(camera_bp, camera_loc, attach_to=hero)
+        actor_list.append(camera_left)
+        camera_left.listen(lambda picture: picture.save_to_disk('output_test_carla/{}/left/{}.png'.format(scenario, picture.frame_number)))
+
+        camera_loc_right = carla.Transform(carla.Location(x=1.8, y=0.54, z=1.3))
+        camera_right = world.spawn_actor(camera_bp, camera_loc_right, attach_to=hero)
+        actor_list.append(camera_right)
+        camera_right.listen(lambda picture: picture.save_to_disk('output_test_carla/{}/right/{}.png'.format(scenario, picture.frame_number)))
+
+        # logging groundtruth
+        gt_log = open("output_test_carla/groundtruth_test.txt", 'w')
 
         frame = None
         start_frame = None
@@ -192,6 +206,7 @@ def main():
         clock = pygame.time.Clock()
 
         dist_travel = 0
+        time = 0
 
         # The loop that allows the simulation
         while dist_travel < total_distance:
@@ -222,14 +237,28 @@ def main():
                 start_frame = frame
 
             next_waypoint = cur_waypoint.next(x_step)[0]
-            van_waypoint = van_waypoint.next(x_step)[0]
+
 
             dx = distance_between_waypoints(cur_waypoint, next_waypoint)
             dist_travel = dist_travel + dx
-            hero.set_transform(next_waypoint.transform)
-            van.set_transform(van_waypoint.transform)
 
-            print(dist_travel)
+            time = time + 1/fps
+
+            hero.set_transform(next_waypoint.transform)
+
+            if scenario == "dynamic":
+                van_waypoint = van_waypoint.next(x_step)[0]
+                van.set_transform(van_waypoint.transform)
+
+            # log ground truth
+            hero_loc = next_waypoint.transform.location
+            hero_rot = next_waypoint.transform.rotation
+
+            gt_line = "{} {} {} {} {} {} {}\n".format(time, hero_loc.x, hero_loc.y, hero_loc.z,
+                                                      hero_rot.roll, hero_rot.pitch, hero_rot.yaw)
+            gt_log.write(gt_line)
+
+            # print(dist_travel)
 
             cur_waypoint = next_waypoint
 
@@ -252,6 +281,9 @@ def main():
         pygame.quit()
         print('Actors destroyed')
 
+        gt_log.close()
+        print("closed log files")
+
 
 def distance_between_waypoints(waypoint1, waypoint2):
     wp1_loc = waypoint1.transform.location
@@ -261,7 +293,8 @@ def distance_between_waypoints(waypoint1, waypoint2):
 
 if __name__ == '__main__':
     try:
-        main()
+        # [1:] gets the complete string
+        main(sys.argv[1:])
 
     except KeyboardInterrupt:
         pygame.quit()
