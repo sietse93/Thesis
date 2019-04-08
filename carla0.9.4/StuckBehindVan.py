@@ -66,8 +66,6 @@ def should_quit():
 
 def main(args):
     scenario = args[0]
-    print(scenario)
-    print(type(scenario))
     if scenario != "static" and scenario != "dynamic":
         print("Argument should be static or dynamic")
         return
@@ -84,6 +82,8 @@ def main(args):
     # calculate required distance between waypoints to simulate certain speed
     v = speed/3.6
     x_step = v*(1/fps)
+
+    image_length = 840
 
     print("input values done")
     actor_list = []
@@ -106,6 +106,9 @@ def main(args):
     world.apply_settings(settings)
 
     debug = world.debug
+
+    # logging groundtruth
+    gt_log = open("output_test_carla/groundtruth_test.txt", 'w')
 
     try:
         # set weather conditions
@@ -157,8 +160,8 @@ def main(args):
         # What blueprint should the sensor have?
         camera_bp = bp_lib.find('sensor.camera.rgb')
         # What attributes are there?
-        camera_bp.set_attribute('image_size_x', '600')
-        camera_bp.set_attribute('image_size_y', '600')
+        camera_bp.set_attribute('image_size_x', str(image_length))
+        camera_bp.set_attribute('image_size_y', str(image_length))
         camera_bp.set_attribute('fov', '90')
         # don't install a sensor tick, it fucks up sync mode.
 
@@ -168,14 +171,13 @@ def main(args):
         # Spawn camera in the world: blueprint, transform and attach to which actor
 
         # camera purely used for visuals in pygame window
-        camera = world.spawn_actor(camera_bp, camera_loc, attach_to=hero)
-        # camera = world.spawn_actor(camera_bp, camera_loc, attach_to=van)
+        # camera = world.spawn_actor(camera_bp, camera_loc, attach_to=hero)
         # add actor to list
-        actor_list.append(camera)
+        # actor_list.append(camera)
 
         # Make sync queue for sensor data.
-        image_queue = queue.Queue()
-        camera.listen(image_queue.put)
+        # image_queue = queue.Queue()
+        # camera.listen(image_queue.put)
 
         # attach cameras used for stereo vision data
         camera_left = world.spawn_actor(camera_bp, camera_loc, attach_to=hero)
@@ -187,19 +189,16 @@ def main(args):
         actor_list.append(camera_right)
         camera_right.listen(lambda picture: picture.save_to_disk('output_test_carla/{}/right/{}.png'.format(scenario, picture.frame_number)))
 
-        # logging groundtruth
-        gt_log = open("output_test_carla/groundtruth_test.txt", 'w')
-
         frame = None
         start_frame = None
         frame_skip_counter = 0
 
         # variable on which to show the camera images
-        display = pygame.display.set_mode(
-            (600, 600),
-            pygame.HWSURFACE | pygame.DOUBLEBUF)
-        # which font to use
-        font = get_font()
+        # display = pygame.display.set_mode(
+        #     (image_length, image_length),
+        #     pygame.HWSURFACE | pygame.DOUBLEBUF)
+        # # which font to use
+        # font = get_font()
 
         # Now the simulation needs to run, we need
         # a class that tracks time
@@ -225,13 +224,13 @@ def main(args):
 
             frame = ts.frame_count
 
-            while True:
-                image = image_queue.get()
-                if image.frame_number == ts.frame_count:
-                    break
-                print('wrong image time-stampstamp: frame=%d, image.frame=%d',
-                        ts.frame_count,
-                        image.frame_number)
+            # while True:
+            #     image = image_queue.get()
+            #     if image.frame_number == ts.frame_count:
+            #         break
+            #     print('wrong image time-stampstamp: frame=%d, image.frame=%d',
+            #             ts.frame_count,
+            #             image.frame_number)
 
             if start_frame is None:
                 start_frame = frame
@@ -262,12 +261,12 @@ def main(args):
 
             cur_waypoint = next_waypoint
 
-            draw_image(display, image)
-
-            text_surface = font.render('% 5d FPS' % clock.get_fps(), True, (255, 255, 255))
-            display.blit(text_surface, (8, 10))
-
-            pygame.display.flip()
+            # draw_image(display, image)
+            #
+            # text_surface = font.render('% 5d FPS' % clock.get_fps(), True, (255, 255, 255))
+            # display.blit(text_surface, (8, 10))
+            #
+            # pygame.display.flip()
 
     finally:
         print('Disable synchronous mode')
