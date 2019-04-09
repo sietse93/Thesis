@@ -14,6 +14,7 @@ import carla
 
 import logging
 import random
+import pdb
 
 try:
     import pygame
@@ -34,7 +35,7 @@ import math
 # this allows symbolic links from git in the directory
 sys.path.append('/home/sietse/carla/PythonAPI')
 
-import pdb
+
 
 
 def draw_image(surface, image):
@@ -70,14 +71,16 @@ def main(args):
         print("Argument should be static or dynamic")
         return
     else:
-        print("Scenario simulated is {}".format(scenario))
+        print("Scenario simulation will be {}".format(scenario))
 
 
     # input values
     fps = 10.0
     speed = 15.0  # in km/h
-    total_distance = 500  # meters
+    total_distance = 50  # meters
     dist2van = 20
+    SL = 97  # starting location index spawn_points
+
 
     # calculate required distance between waypoints to simulate certain speed
     v = speed/3.6
@@ -85,7 +88,6 @@ def main(args):
 
     image_length = 840
 
-    print("input values done")
     actor_list = []
     pygame.init()
 
@@ -130,7 +132,7 @@ def main(args):
 
         # note spawn_points are Transform class not Waypoint class
         spawn_points = map.get_spawn_points()
-        hero_spawn = spawn_points[97]
+        hero_spawn = spawn_points[SL]
 
         # Create a route, set destination and get a list of waypoints to get there
         # the simplest route planner I can think of
@@ -146,6 +148,7 @@ def main(args):
         # when an image is involved/ pygame is involved
         hero.set_simulate_physics(False)
 
+        # add van if scenario is dynamic
         if scenario == "dynamic":
             van_bp = bp_lib.find('vehicle.carlamotors.carlacola')
             van_waypoint = begin_waypoint.next(dist2van)[0]
@@ -182,13 +185,15 @@ def main(args):
         # attach cameras used for stereo vision data
         camera_left = world.spawn_actor(camera_bp, camera_loc, attach_to=hero)
         actor_list.append(camera_left)
-        camera_left.listen(lambda picture: picture.save_to_disk('output_test_carla/{}/left/{}.png'.format(scenario, picture.frame_number)))
+        image_left_queue = queue.Queue()
+        camera_left.listen(image_left_queue.put)
 
         camera_loc_right = carla.Transform(carla.Location(x=1.8, y=0.54, z=1.3))
         camera_right = world.spawn_actor(camera_bp, camera_loc_right, attach_to=hero)
         actor_list.append(camera_right)
-        camera_right.listen(lambda picture: picture.save_to_disk('output_test_carla/{}/right/{}.png'.format(scenario, picture.frame_number)))
-
+        image_right_queue = queue.Queue()
+        camera_right.listen(image_right_queue.put)
+    
         frame = None
         start_frame = None
         frame_skip_counter = 0
@@ -224,13 +229,15 @@ def main(args):
 
             frame = ts.frame_count
 
-            # while True:
-            #     image = image_queue.get()
-            #     if image.frame_number == ts.frame_count:
-            #         break
-            #     print('wrong image time-stampstamp: frame=%d, image.frame=%d',
-            #             ts.frame_count,
-            #             image.frame_number)
+            while True:
+                image_left = image_left_queue.get()
+                image_right = image_right_queue.get()
+                if image_left.frame_number == ts.frame_count and image_right.frame_number == ts.frame_count:
+                    image_left.save_to_disk('output_test_carla/{}/left/{}.png'.format(scenario, image_left.frame_number))
+                    image_right.save_to_disk('output_test_carla/{}/right/{}.png'.format(scenario, image_right.frame_number))
+                    break
+                else:
+                    pdb.set_trace()
 
             if start_frame is None:
                 start_frame = frame
@@ -250,6 +257,7 @@ def main(args):
                 batch += [carla.command.ApplyTransform(van.id, van_waypoint.transform)]
                 # van.set_transform(van_waypoint.transform)
 
+            # Apply batch transform
             client.apply_batch(batch)
 
             # log ground truth
