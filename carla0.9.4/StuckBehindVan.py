@@ -36,8 +36,6 @@ import math
 sys.path.append('/home/sietse/carla/PythonAPI')
 
 
-
-
 def draw_image(surface, image):
     array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
     array = np.reshape(array, (image.height, image.width, 4))
@@ -80,9 +78,27 @@ def main(args):
     total_distance = 50  # meters
     dist2van = 20
     SL = 97  # starting location index spawn_points
+    Town = 3
 
+    # Get systematic file extensions
+    # TownNumber_StartingLocation_(S)tatic(D)ynamic_DynamicScenario
+    home_user = os.path.expanduser('~')
+    if scenario == "dynamic":
+        file_sys = "/T{}_SL{}_{}{}".format(Town, SL, scenario[0], 1)
+    else:
+        file_sys = "/T{}_SL{}_{}".format(Town, SL, scenario[0])
 
-    # calculate required distance between waypoints to simulate certain speed
+    # A directory per scenario
+    dir = home_user + "/results_carla0.9" + file_sys
+
+    try:
+        os.mkdir(dir)
+    except OSError:
+        print("directory exists")
+
+    filename = dir+file_sys
+
+    # Calculate required distance between waypoints to simulate certain speed
     v = speed/3.6
     x_step = v*(1/fps)
 
@@ -110,7 +126,7 @@ def main(args):
     debug = world.debug
 
     # logging groundtruth
-    gt_log = open("output_test_carla/groundtruth_test.txt", 'w')
+    gt_log = open(filename + "_gt.txt", 'w')
 
     try:
         # set weather conditions
@@ -233,8 +249,8 @@ def main(args):
                 image_left = image_left_queue.get()
                 image_right = image_right_queue.get()
                 if image_left.frame_number == ts.frame_count and image_right.frame_number == ts.frame_count:
-                    image_left.save_to_disk('output_test_carla/{}/left/{}.png'.format(scenario, image_left.frame_number))
-                    image_right.save_to_disk('output_test_carla/{}/right/{}.png'.format(scenario, image_right.frame_number))
+                    image_left.save_to_disk(dir+'/images/left/{}.png'.format(image_left.frame_number))
+                    image_right.save_to_disk(dir+'/images/right/{}.png'.format(image_right.frame_number))
                     break
                 else:
                     pdb.set_trace()
