@@ -19,6 +19,8 @@ def gt_consistency(dynamic, static):
         error_z.append(e_z)
         error_mag.append(math.sqrt(e_x**2 + e_y**2 + e_z**2))
 
+    print(sum(error_mag))
+
 
     plt.figure("Pose difference between static and dynamic")
     plt.subplot(3, 1, 1)
