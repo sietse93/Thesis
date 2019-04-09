@@ -90,11 +90,11 @@ def CreateStereoBag(left_imgs, right_imgs, bagname):
         for i in range(len(left_imgs)):
             print("Adding %s" % left_imgs[i])
             img_cv_left = cv2.imread(left_imgs[i])
-            Img_left = bridge.cv2_to_imgmsg(img_cv_left, encoding="rgb8")
+            Img_left = bridge.cv2_to_imgmsg(img_cv_left, encoding="bgr8")
 
             print("Adding %s" % right_imgs[i])
             img_cv_right = cv2.imread(right_imgs[i])
-            Img_right = bridge.cv2_to_imgmsg(img_cv_right, encoding="rgb8")
+            Img_right = bridge.cv2_to_imgmsg(img_cv_right, encoding="bgr8")
 
             # TO DO: IF IMAGE IS SKIPPED THAN THE HEADER TIME SHOULD BE DIFFERENT
             # fps=10
@@ -136,7 +136,7 @@ def CreateMonoBag(imgs,bagname):
             Img.header.stamp = Stamp
             Img.width = im.size[0]
             Img.height = im.size[1]
-            Img.encoding = "rgb8"
+            Img.encoding = "bgr8"
             Img.header.frame_id = "camera"
             Img_data = [pix for pixdata in im.getdata() for pix in pixdata]
             Img.data = Img_data
@@ -157,7 +157,7 @@ def CreateBag(args):
     missing_im_left = MissingImages(left_imgs)
     missing_im_right = MissingImages(right_imgs)
 
-    if len(missing_im_left) == 0 and len(missing_im_right == 0):
+    if len(missing_im_left) == 0 and len(missing_im_right) == 0:
         print("No missing images")
 
         if len(left_imgs) > 0 and len(right_imgs) > 0:
