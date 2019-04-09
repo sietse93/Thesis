@@ -193,7 +193,7 @@ def main(args):
         actor_list.append(camera_right)
         image_right_queue = queue.Queue()
         camera_right.listen(image_right_queue.put)
-    
+
         frame = None
         start_frame = None
         frame_skip_counter = 0
