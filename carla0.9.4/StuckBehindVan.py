@@ -237,17 +237,20 @@ def main(args):
 
             next_waypoint = cur_waypoint.next(x_step)[0]
 
-
             dx = distance_between_waypoints(cur_waypoint, next_waypoint)
             dist_travel = dist_travel + dx
 
             time = time + 1/fps
 
-            hero.set_transform(next_waypoint.transform)
+            # hero.set_transform(next_waypoint.transform)
+            batch = [carla.command.ApplyTransform(hero.id, next_waypoint.transform)]
 
             if scenario == "dynamic":
                 van_waypoint = van_waypoint.next(x_step)[0]
-                van.set_transform(van_waypoint.transform)
+                batch += [carla.command.ApplyTransform(van.id, van_waypoint.transform)]
+                # van.set_transform(van_waypoint.transform)
+
+            client.apply_batch(batch)
 
             # log ground truth
             hero_loc = next_waypoint.transform.location
