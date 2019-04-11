@@ -1,4 +1,4 @@
-from CarlaSlamPerformance import CarlaSlamEvaluate
+from CarlaSlamPerformanceV2 import CarlaSlamEvaluate
 from matplotlib import pyplot as plt
 
 def compare_position(methods):
