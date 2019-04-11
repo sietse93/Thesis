@@ -7,7 +7,8 @@ roslib.load_manifest('sensor_msgs')
 import cv2
 from cv_bridge import CvBridge
 import numpy as np
-
+import pdb
+# sys.path.append('/home/sietse/carla/PythonAPI')
 
 def Stereo2Rosbag(dir, file_sys):
     '''Creates the actual bag file by successively adding images'''
@@ -98,6 +99,7 @@ def MissingImages(file_list):
 
 def GetFilesFromDir(dir):
     dir = dir + "/images"
+
     all = []
     left_files = []
     right_files = []
@@ -143,7 +145,7 @@ def main():
 
     home_user = os.path.expanduser('~')
     if scenario == "dynamic":
-        file_sys = "/T{}_SL{}_{}_{}".format(Town, SL, scenario[0], 1)
+        file_sys = "/T{}_SL{}_{}{}".format(Town, SL, scenario[0], 1)
     else:
         file_sys = "/T{}_SL{}_{}".format(Town, SL, scenario[0])
 
