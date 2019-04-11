@@ -75,7 +75,7 @@ def main(args):
     # input values
     fps = 10.0
     speed = 15.0  # in km/h
-    total_distance = 50  # meters
+    total_distance = 500 # meters
     dist2van = 20
     SL = 97  # starting location index spawn_points
     Town = 3

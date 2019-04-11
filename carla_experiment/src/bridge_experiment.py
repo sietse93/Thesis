@@ -161,6 +161,7 @@ class CarlaRosBridgeExperiment(CarlaRosBridge):
             # handle groundtruth logging:
             location = measurements.player_measurements.transform.location
             rotation = measurements.player_measurements.transform.rotation
+
             if rospy.get_param('log_gt', True):
                 gt_log_line = "{} {} {} {} {} {} {}\n".format(measurements.game_timestamp,
                                                              location.x,
