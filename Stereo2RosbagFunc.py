@@ -21,9 +21,12 @@ def Stereo2Rosbag(dir, file_sys):
     missing_im_left = MissingImages(left_imgs)
     missing_im_right = MissingImages(right_imgs)
 
+    # if no images are missing create Stereo Rosbag
     if len(missing_im_left) == 0 and len(missing_im_right) == 0:
         print("No missing images")
-
+        # Remove first image, so spawning of vehicle is not registered 
+        left_imgs.pop(0)
+        right_imgs.pop(0)
         if len(left_imgs) > 0 and len(right_imgs) > 0:
             # create bagfile with stereo camera image pairs
             CreateStereoBag(dir, file_sys, left_imgs, right_imgs)
