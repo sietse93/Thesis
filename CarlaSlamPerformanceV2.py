@@ -122,6 +122,11 @@ class CarlaSlamEvaluate(object):
                 # Nothing changes with the Euler angles, except yaw.
                 roll_ue_rel = roll_ue_abs[index]
                 pitch_ue_rel = pitch_ue_abs[index]
+
+                # new Carla can output a pitch of 360 degrees, which should be 0 degrees
+                if pitch_ue_rel >= 360.0:
+                    pitch_ue_rel = pitch_ue_rel - 360.0
+                # yaw needs to be relative to initial position
                 yaw_ue_rel = yaw_ue_0
 
                 # convert absolute left handed system into a relative left handed system
