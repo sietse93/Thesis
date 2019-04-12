@@ -130,7 +130,6 @@ class CarlaSlamEvaluate(object):
                 yaw_ue_rel = yaw_ue_0
 
                 # convert absolute left handed system into a relative left handed system
-                # Could be that rotation is right handed
                 theta = np.radians(yaw_ue_init)
                 c, s = np.cos(theta), np.sin(theta)
                 # note this is a rotation matrix for LEFT HANDED COORDINATE SYSTEM
@@ -220,26 +219,41 @@ class CarlaSlamEvaluate(object):
                 q3_orb = float_line[6]
                 q4_orb = float_line[7]
 
-                # Convert orb axis to ros axis
-                x_new = z_orb
-                y_new = -x_orb
-                z_new = -y_orb
+                # Convert orb axis to ros axis, which in theory looks like
+                # 1) CCW (+)90 deg in x-axis
+                # 2) CCW (+)90 deg in z-axis
+
+                # But it seems that positive rotations are defined as CW in the ORB system, instead of CCW.
+                # That is the only reason how I can explain that x is correct and y and z are in the negative direction.
+                # It is also not a left handed system, because the orientation of the axis are right handed.
+                theta = np.radians(-90)
+                c, s = np.cos(theta), np.sin(theta)
+                # Right handed rotation matrices
+                Rx = np.matrix([[1, 0, 0], [0, c, -s], [0, s, c]])
+                Rz = np.matrix([[c, -s, 0], [s, c, 0], [0, 0, 1]])
+
+                pos_old = np.matrix([x_orb, y_orb, z_orb])
+                new_pos = Rz*Rx*pos_old.reshape(3, 1)
+                x_new = new_pos.tolist()[0][0]
+                y_new = new_pos.tolist()[1][0]
+                z_new = new_pos.tolist()[2][0]
+                # old method
+                # x_new = z_orb
+                # y_new = -x_orb
+                # z_new = -y_orb
+
                 position = np.array([x_new, y_new, z_new])
                 self.positions.append(position)
 
                 # Quaternions is defined as iq1+jq2+kq3+q4
                 # The axis system of i, j, k  are incorrect and need to be converted to ROS axis system
-
-                # What I thought would give good results
-                # q1_new = q3_orb
-                # q2_new = -q1_orb
-                # q3_new = -q2_orb
-                # q4_new = q4_orb
-
-                # What actually gives good results, (before the yaw angle outputted full rotations)
-                q1_new = -q3_orb
-                q2_new = q1_orb
-                q3_new = -q2_orb
+                q_old = np.matrix([q1_orb, q2_orb, q3_orb])
+                q_new = Rz*Rx*q_old.reshape(3, 1)
+                # Now the quaternion axis system has the same orientation as the euclidean space,
+                # since the ORB axis system underwent the same transformation
+                q1_new = q_new.tolist()[0][0]
+                q2_new = q_new.tolist()[1][0]
+                q3_new = q_new.tolist()[2][0]
                 q4_new = q4_orb
 
                 quaternion = [q1_new, q2_new, q3_new, q4_new]
@@ -250,9 +264,13 @@ class CarlaSlamEvaluate(object):
                 q[2][3] = z_new
                 self.Q.append(q)
 
+                # Note that euler_from_quaternion, is quaternion_matrix function and then euler_from_matrix function
+                # Also, positive rotations seem to be defined as CW instead of CCW.
                 roll, pitch, yaw_180 = tf.transformations.euler_from_quaternion(quaternion, axes='sxyz')
-                roll_list.append(np.degrees(roll))
-                pitch_list.append(np.degrees(pitch))
+
+                # roll and pitch are exactly reversed. If results are weird, this could be the mistake
+                roll_list.append(np.degrees(-roll))
+                pitch_list.append(np.degrees(-pitch))
                 yaw_180_list.append(np.degrees(yaw_180))
 
             # convert yaw angle to an angle that can show more than 180 degrees
@@ -262,6 +280,8 @@ class CarlaSlamEvaluate(object):
             for index, roll in enumerate(roll_list):
                 orientation = np.array([roll, pitch_list[index], yaw_list[index]])
                 self.orientations.append(orientation)
+
+
 
 
 def abs_yaw_angle_conversion(rel_yaw_angle):
