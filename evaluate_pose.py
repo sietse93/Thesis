@@ -1,10 +1,10 @@
-from CarlaSlamPerformanceV2 import CarlaSlamEvaluate
+# from CarlaSlamPerformanceV2 import CarlaSlamEvaluate
 from matplotlib import pyplot as plt
 
 def compare_position(methods):
     """plots the position of a list of CarlaSlamEvaluate objects"""
 
-    plt.figure("Pose over time")
+    plt.figure("Position over time")
 
     for method in methods:
         x = [position[0] for position in method.positions]
