@@ -179,7 +179,8 @@ class CarlaSlamEvaluate(object):
                 # convert euler angles to quaternions
                 # rotation order: static axis, roll, pitch, yaw
                 # could be that there are change in sign in these quaternions
-                quaternion = tf.transformations.quaternion_from_euler(math.radians(roll), math.radians(pitch), math.radians(yaw), axes='sxyz')
+                # quaternion = tf.transformations.quaternion_from_euler(math.radians(roll), math.radians(pitch), math.radians(yaw), axes='sxyz')
+		quaternion = transformations.quaternion_from_euler(math.radians(roll), math.radians(pitch), math.radians(yaw), axes='sxyz')
                 self.quaternions.append(quaternion)
 
                 # Convert quaternion to homogeneous coordinates
@@ -191,7 +192,8 @@ class CarlaSlamEvaluate(object):
                 # q[2][3] = z
 
                 # lets try to get the rotation matrix from the Euler angles
-                q = tf.transformations.euler_matrix(math.radians(roll), math.radians(pitch), math.radians(yaw), axes='sxyz')
+                # q = tf.transformations.euler_matrix(math.radians(roll), math.radians(pitch), math.radians(yaw), axes='sxyz')
+		q = transformations.euler_matrix(math.radians(roll), math.radians(pitch), math.radians(yaw), axes='sxyz')
                 q[0][3] = x
                 q[1][3] = y
                 q[2][3] = z
@@ -259,7 +261,8 @@ class CarlaSlamEvaluate(object):
 
                 quaternion = [q1_new, q2_new, q3_new, q4_new]
                 self.quaternions.append(quaternion)
-                q = tf.transformations.quaternion_matrix(quaternion)
+                # q = tf.transformations.quaternion_matrix(quaternion)
+		q = transformations.quaternion_matrix(quaternion)
                 q[0][3] = x_new
                 q[1][3] = y_new
                 q[2][3] = z_new
@@ -267,7 +270,8 @@ class CarlaSlamEvaluate(object):
 
                 # Note that euler_from_quaternion, is quaternion_matrix function and then euler_from_matrix function
                 # Also, positive rotations seem to be defined as CW instead of CCW.
-                roll, pitch, yaw_180 = tf.transformations.euler_from_quaternion(quaternion, axes='sxyz')
+                # roll, pitch, yaw_180 = tf.transformations.euler_from_quaternion(quaternion, axes='sxyz')
+		roll, pitch, yaw_180 = transformations.euler_from_quaternion(quaternion, axes='sxyz')
 
                 # roll and pitch are exactly reversed. If results are weird, this could be the mistake
                 roll_list.append(np.degrees(-roll))
@@ -302,7 +306,6 @@ def abs_yaw_angle_conversion(rel_yaw_angle):
     index = 1
     index_limit = len(rel_yaw_angle)
 
-    debug_yaw = open("/home/sietse/debug_yaw.txt", "w")
     while index != index_limit:
         # finds the modulo of either 180 or -180
         modulo_angle = rel_yaw_angle[index] % (sign_modulo*180)
@@ -321,10 +324,8 @@ def abs_yaw_angle_conversion(rel_yaw_angle):
 
         yaw_abs_element = n180 + modulo_angle
         yaw_abs.append(yaw_abs_element)
-        debug_yaw.write("{}     {}      {}  \n".format(index, rel_yaw_angle[index], yaw_abs_element))
         index = index + 1
 
-    debug_yaw.close()
     return yaw_abs
 
 

@@ -13,13 +13,14 @@ def main():
 	with ConvertRefFrame("gt", file_loc, 'k-') as gt: 
 		gt.process_data()
 	print("data processed")
-	pdb.set_trace()
+	
 	crf2json(gt, file_dir, name)
 	print("converted to json")
 	json_file_name = file_dir+name+"_json.txt"
 	json_txt_file_read = open(json_file_name,'r')
 	json_dict_read = json.load(json_txt_file_read)
-
+	print(json_dict_read["orientations"][0])
+	json_txt_file_read.close()
 	
 
 if __name__=="__main__": 
