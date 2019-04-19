@@ -4,6 +4,9 @@ import numpy as np
 
 def crf2json(ConvertRefFrame, file_dir, file_name):
 	"""Writes the class ConvertRefFrame to a json file"""
+
+	if file_name[-4:] == ".txt":
+		file_name = file_name[:-4]
 	
 	# convert class to a dictionary containing lists only. Arrays are not excepted
 	positions_list = [position.tolist() for position in ConvertRefFrame.positions]
@@ -12,7 +15,7 @@ def crf2json(ConvertRefFrame, file_dir, file_name):
 			"positions": positions_list, 
 			"orientations": orientations_list, 
 			"file_location": ConvertRefFrame.flocation, 
-			"plot_style": ConvertRefFrame.plotstyle
+			"plot_style": ConvertRefFrame.plotstyle,
 			"method": ConvertRefFrame.method
 			}
 	json_data = json.dumps(crf_dict)
@@ -21,9 +24,9 @@ def crf2json(ConvertRefFrame, file_dir, file_name):
 	json_file.write(json_data)
 	json_file.close()
 
-def json2crf(file_dir, file_name, method): 
+def json2crf(file_dir, file_name):
 	json_file = open(file_dir+file_name, 'r')
-	cfr_dict = json.load(json_file)
+	crf_dict = json.load(json_file)
 	
 	method = crf_dict["method"]
 	file_location = crf_dict["file_location"]
@@ -32,7 +35,7 @@ def json2crf(file_dir, file_name, method):
 	crf = ConvertRefFrame(method, file_location, plotstyle)
 	crf.time = crf_dict["time"] 
 	positions_list = crf_dict["positions"] 	 	
-	crf.positions = [np.array(position) for postion in positions_list]
+	crf.positions = [np.array(position) for position in positions_list]
 	orientations_list = crf_dict["orientations"] 
 	crf.orientations = [np.array(orientation) for orientation in orientations_list]
 	crf.filelocation = file_dir+file_name
