@@ -48,8 +48,6 @@ class ConvertRefFrame(object):
         # time stamps used for RPE
         self.timeQ1Q2 = []
 
-        # Root Mean Square Error of Relative Pose Error over distance
-        self.RPE_RMSE_dist = []
 
 
     def __enter__(self):
@@ -142,27 +140,6 @@ class ConvertRefFrame(object):
                 y_ue_rel = pos_ue_rel.tolist()[1][0]
                 z_ue_rel = pos_ue_rel.tolist()[2][0]
 
-                # yaw_start = int(round(yaw_ue_init))
-                # if yaw_start == 0:
-                #     x_ue_rel = x_ue_0
-                #     y_ue_rel = y_ue_0
-                #     z_ue_rel = z_ue_0
-                # elif yaw_start == 180:
-                #     x_ue_rel = -x_ue_0
-                #     y_ue_rel = -y_ue_0
-                #     z_ue_rel = z_ue_0
-                # elif yaw_start == 90:
-                #     x_ue_rel = y_ue_0
-                #     y_ue_rel = -x_ue_0
-                #     z_ue_rel = z_ue_0
-                # elif yaw_start == -90:
-                #     x_ue_rel = - y_ue_0
-                #     y_ue_rel = x_ue_0
-                #     z_ue_rel = z_ue_0
-                # else:
-                #     print("Starting point is not along one of the axis")
-                #     exit()
-
                 # Convert relative left handed system to the right handed system used in ROS
                 x = x_ue_rel
                 y = - y_ue_rel
@@ -240,10 +217,6 @@ class ConvertRefFrame(object):
                 x_new = new_pos.tolist()[0][0]
                 y_new = new_pos.tolist()[1][0]
                 z_new = new_pos.tolist()[2][0]
-                # old method
-                # x_new = z_orb
-                # y_new = -x_orb
-                # z_new = -y_orb
 
                 position = np.array([x_new, y_new, z_new])
                 self.positions.append(position)
