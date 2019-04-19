@@ -25,6 +25,7 @@ def crf2json(ConvertRefFrame, file_dir, file_name):
 	json_file.close()
 
 def json2crf(file_dir, file_name):
+	"""Converts JSON file to ConvertRefFrame class"""
 	json_file = open(file_dir+file_name, 'r')
 	crf_dict = json.load(json_file)
 	
@@ -39,3 +40,5 @@ def json2crf(file_dir, file_name):
 	orientations_list = crf_dict["orientations"] 
 	crf.orientations = [np.array(orientation) for orientation in orientations_list]
 	crf.filelocation = file_dir+file_name
+
+	return crf
