@@ -5,8 +5,8 @@ import pdb
 
 
 def main():
-	"""Converts .txt files from ORB and ground truth to the same reference frame (right hand relative coordinate system)
-	 And exports them to json files"""
+	"""Converts .txt files from ORB and ground truth to the same reference frame (right hand relative
+	coordinate system) And exports them to json files"""
 
 	base_dir = "/home/sietse/results_carla0.9/stuckbehindvan/20fps/"
 
@@ -59,11 +59,6 @@ def main():
 					with ConvertRefFrame("gt", file_loc, "k-") as gt:
 						gt.process_data()
 					crf2json(gt, file_dir, file_name)
-
-	# print("converted to json")
-	# json_file_name = file_dir+name+"_json.txt"
-	# json_txt_file_read = open(json_file_name,'r')
-	# json_dict_read = json.load(json_txt_file_read)
 
 
 if __name__ == "__main__":

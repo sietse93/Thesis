@@ -49,7 +49,6 @@ class ConvertRefFrame(object):
         self.timeQ1Q2 = []
 
 
-
     def __enter__(self):
         self.data = open(self.flocation, "r")
         # This should label the object to the file name which should be descriptive enough
@@ -101,6 +100,7 @@ class ConvertRefFrame(object):
 
             # convert the yaw angle to an angle that goes beyond 180 degrees
             yaw_ue_abs = abs_yaw_angle_conversion(yaw_ue_abs180)
+            # pdb.set_trace()
 
             # Input are the coordinates of the vehicle in an absolute left handed system, specified by UE
             # Yaw angle is the absolute rotation measured from the UE axis system, which allows to specify full rotation
@@ -284,15 +284,25 @@ def abs_yaw_angle_conversion(rel_yaw_angle):
         modulo_angle = rel_yaw_angle[index] % (sign_modulo*180)
 
         if myround(rel_yaw_angle[index - 1]) == -180 and myround(rel_yaw_angle[index]) == 180:
+            # for some weird reason this newer UE can output an angle of 180.035
+            if rel_yaw_angle[index] > 180:
+                n180 = n180 + 180
             n180 = n180 - 180
+            # print(0, index)
+            # pdb.set_trace()
 
         if myround(rel_yaw_angle[index - 1]) == 180 and myround(rel_yaw_angle[index]) == -180:
+            # print(1, index)
+            if rel_yaw_angle[index-1] > 180:
+                n180 = n180 - 180
             n180 = n180 + 180
 
         if myround(rel_yaw_angle[index]) == 0 and np.sign(rel_yaw_angle[index - 1]) == -1 and np.sign(rel_yaw_angle[index]) == 1:
+            # print(2, index)
             n180 = n180 + 180
 
         if myround(rel_yaw_angle[index]) == 0 and np.sign(rel_yaw_angle[index - 1]) == 1 and np.sign(rel_yaw_angle[index]) == -1:
+            # print(3, index)
             n180 = n180 - 180
 
         yaw_abs_element = n180 + modulo_angle
