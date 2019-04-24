@@ -1,5 +1,6 @@
 import math
 import numpy as np
+import pdb
 
 
 def evaluate_RPE_dist(gt, Slam, eva_dist=100.0):
@@ -7,6 +8,7 @@ def evaluate_RPE_dist(gt, Slam, eva_dist=100.0):
     # list of traveled distances over time up until that point
     # note that distances is indexed according to the ground truth file
     distances = []
+
     for index, position in enumerate(gt.positions):
         if index == 0:
             distance = 0
@@ -14,9 +16,9 @@ def evaluate_RPE_dist(gt, Slam, eva_dist=100.0):
         else:
             dx = position[0] - gt.positions[index - 1][0]
             dy = position[1] - gt.positions[index - 1][1]
-            distance = distance + math.sqrt(dx ** 2 + dy ** 2)
+            dz = position[2] - gt.positions[index - 1][2]
+            distance = distance + math.sqrt(dx ** 2 + dy ** 2 + dz ** 2)
             distances.append(distance)
-
     # contains the traveled distance for each Slam timestamp
     slam_distances = []
     for time in Slam.time:
@@ -36,6 +38,7 @@ def evaluate_RPE_dist(gt, Slam, eva_dist=100.0):
     RPE_z = []
     trans_errs = []
     rot_errs = []
+
     for index, distance in enumerate(slam_distances):
         # find the index where the distance is larger than the current distance + evaluation distance
         # this will be the evaluation index
@@ -89,7 +92,7 @@ def evaluate_RPE_dist(gt, Slam, eva_dist=100.0):
         except IndexError:
             continue
 
-        return time_used, trans_errs, rot_errs
+    return time_used, trans_errs, rot_errs
 
 
 def calc_rmse(error_list):
