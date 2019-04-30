@@ -48,16 +48,14 @@ class ConvertRefFrame(object):
         # time stamps used for RPE
         self.timeQ1Q2 = []
 
-
     def __enter__(self):
         self.data = open(self.flocation, "r")
         # This should label the object to the file name which should be descriptive enough
         # index where "SL" starts
-        index_start = self.flocation.find("SL")
+        file_name = self.flocation.split("/")[-1]
 
         # label = NameOfMethod_SL_{}_NV_{}
-        # self.label = self.method + "_" + self.flocation[index_start:(index_start+11)]
-        self.label = self.method + "_" + self.flocation[index_start:-4]
+        self.label = file_name[:-4]
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
