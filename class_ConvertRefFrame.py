@@ -99,7 +99,7 @@ class ConvertRefFrame(object):
                 yaw_ue_abs180.append(float_line[6])
 
             # convert the yaw angle to an angle that goes beyond 180 degrees
-            yaw_ue_abs = abs_yaw_angle_conversion(yaw_ue_abs180)
+            yaw_ue_abs = self.abs_yaw_angle_conversion(yaw_ue_abs180)
             # pdb.set_trace()
 
             # Input are the coordinates of the vehicle in an absolute left handed system, specified by UE
@@ -252,7 +252,7 @@ class ConvertRefFrame(object):
                 yaw_180_list.append(np.degrees(yaw_180))
 
             # convert yaw angle to an angle that can show more than 180 degrees
-            yaw_list = abs_yaw_angle_conversion(yaw_180_list)
+            yaw_list = self.abs_yaw_angle_conversion(yaw_180_list)
 
             # append the converted euler angles into the orientation attribute
             for index, roll in enumerate(roll_list):
@@ -260,56 +260,78 @@ class ConvertRefFrame(object):
                 self.orientations.append(orientation)
 
 
+    def abs_yaw_angle_conversion(self, rel_yaw_angle):
+        """Function that converts a yaw angle that ranges from  -180 to 180 degrees, to a yaw angle that has infinite range
+        and indicates full rotations. Note that this function can be used for left and right handed axis system"""
+
+        yaw_abs = []
+        yaw_abs.append(rel_yaw_angle[0])
+
+        # n180 tracks the number of 180 degrees rotations and direction.
+        n180 = 0
+        n360 = 0
+
+        # sign_modulo is the sign of the very first pose
+        # scratch that... second pose, first pose the angle can be zero for ORB SLAM. The method does not work then.
+        sign_modulo = np.sign(rel_yaw_angle[1])
+
+        index = 1
+        index_limit = len(rel_yaw_angle)
+        if self.method == "gt":
+            while index != index_limit:
+                modulo_angle = rel_yaw_angle[index] % (sign_modulo * 360)
+                if myround(rel_yaw_angle[index]) == 0 and myround(rel_yaw_angle[index - 1]) == 0 and np.sign(
+                        rel_yaw_angle[index - 1]) == -1 and np.sign(
+                        rel_yaw_angle[index]) == 1:
+                    n360 = n360 + 360
+                if myround(rel_yaw_angle[index]) == 0 and myround(rel_yaw_angle[index - 1]) == 0 and np.sign(
+                        rel_yaw_angle[index - 1]) == 1 and np.sign(
+                        rel_yaw_angle[index]) == -1:
+                    n360 = n360 - 360
+                if myround(rel_yaw_angle[index]) == 360 and myround(rel_yaw_angle[index - 1]) == 0 and np.sign(
+                        rel_yaw_angle[index - 1]) == 1:
+                    n360 = n360 - 360
+                    # pdb.set_trace()
+                if myround(rel_yaw_angle[index]) == 0 and myround(rel_yaw_angle[index - 1]) == 360 and np.sign(
+                        rel_yaw_angle[index - 1]) == 1:
+                    n360 = n360 + 360
+                yaw_abs_element = n360 + modulo_angle
+                yaw_abs.append(yaw_abs_element)
+                index = index + 1
+
+        else:
+            while index != index_limit:
+                # finds the modulo of either 180 or -180
+                modulo_angle = rel_yaw_angle[index] % (sign_modulo*180)
+
+                if myround(rel_yaw_angle[index - 1]) == -180 and myround(rel_yaw_angle[index]) == 180:
+                    # for some weird reason this newer UE can output an angle of 180.035
+                    if rel_yaw_angle[index] > 180:
+                        n180 = n180 + 180
+                    n180 = n180 - 180
+                    # print(0, index)
+                    # pdb.set_trace()
+
+                if myround(rel_yaw_angle[index - 1]) == 180 and myround(rel_yaw_angle[index]) == -180:
+                    # print(1, index)
+                    if rel_yaw_angle[index-1] > 180:
+                        n180 = n180 - 180
+                    n180 = n180 + 180
+
+                if myround(rel_yaw_angle[index]) == 0 and np.sign(rel_yaw_angle[index - 1]) == -1 and np.sign(rel_yaw_angle[index]) == 1:
+                    # print(2, index)
+                    n180 = n180 + 180
+
+                if myround(rel_yaw_angle[index]) == 0 and np.sign(rel_yaw_angle[index - 1]) == 1 and np.sign(rel_yaw_angle[index]) == -1:
+                    # print(3, index)
+                    n180 = n180 - 180
 
 
-def abs_yaw_angle_conversion(rel_yaw_angle):
-    """Function that converts a yaw angle that ranges from  -180 to 180 degrees, to a yaw angle that has infinite range
-    and indicates full rotations. Note that this function can be used for left and right handed axis system"""
+                yaw_abs_element = n180 + modulo_angle
+                yaw_abs.append(yaw_abs_element)
+                index = index + 1
 
-    yaw_abs = []
-    yaw_abs.append(rel_yaw_angle[0])
-
-    # n180 tracks the number of 180 degrees rotations and direction.
-    n180 = 0
-
-    # sign_modulo is the sign of the very first pose
-    # scratch that... second pose, first pose the angle can be zero for ORB SLAM. The method does nto work then.
-    sign_modulo = np.sign(rel_yaw_angle[1])
-
-    index = 1
-    index_limit = len(rel_yaw_angle)
-
-    while index != index_limit:
-        # finds the modulo of either 180 or -180
-        modulo_angle = rel_yaw_angle[index] % (sign_modulo*180)
-
-        if myround(rel_yaw_angle[index - 1]) == -180 and myround(rel_yaw_angle[index]) == 180:
-            # for some weird reason this newer UE can output an angle of 180.035
-            if rel_yaw_angle[index] > 180:
-                n180 = n180 + 180
-            n180 = n180 - 180
-            # print(0, index)
-            # pdb.set_trace()
-
-        if myround(rel_yaw_angle[index - 1]) == 180 and myround(rel_yaw_angle[index]) == -180:
-            # print(1, index)
-            if rel_yaw_angle[index-1] > 180:
-                n180 = n180 - 180
-            n180 = n180 + 180
-
-        if myround(rel_yaw_angle[index]) == 0 and np.sign(rel_yaw_angle[index - 1]) == -1 and np.sign(rel_yaw_angle[index]) == 1:
-            # print(2, index)
-            n180 = n180 + 180
-
-        if myround(rel_yaw_angle[index]) == 0 and np.sign(rel_yaw_angle[index - 1]) == 1 and np.sign(rel_yaw_angle[index]) == -1:
-            # print(3, index)
-            n180 = n180 - 180
-
-        yaw_abs_element = n180 + modulo_angle
-        yaw_abs.append(yaw_abs_element)
-        index = index + 1
-
-    return yaw_abs
+        return yaw_abs
 
 
 def myround(x, base=10):
