@@ -9,8 +9,11 @@ import math
 
 class ScSlPerf:
     def __init__(self, ds, Town, SL, slam_stat, slam_dyn, gt):
-        self.Scenario = {"scenario": "Stuck behind van", " Distance": ds}
-        self.Location = {"Town": Town, "Location": SL}
+        self.scenario = {"Scenario": "Stuck behind van", " Distance": ds}
+        self.location = {"Town": Town, "Location": SL}
+        # contains the list of crs objects
+        self.slam_stat = []
+        self.slam_dyn = []
         self.raw_data_stat = []
         self.raw_data_dyn = []
         self.rmse_trans_static = []
@@ -20,7 +23,9 @@ class ScSlPerf:
 
         for orb in slam_stat:
             time_used, trans_errors, rot_errors = evaluate_RPE_dist(gt, orb)
-            raw_data_single = {"time": time_used, "RPE_trans": trans_errors, "RPE_rot": rot_errors}
+            raw_data_single = {"time": time_used, "RPE_trans": trans_errors, "RPE_rot": rot_errors,
+                               "plotstyle": orb.plotstyle, "label": orb.label}
+            self.slam_stat.append(slam_stat)
             self.raw_data_stat.append(raw_data_single)
             self.rmse_trans_static.append(calc_rmse(trans_errors))
             self.rmse_rot_static.append(calc_rmse(rot_errors))
@@ -30,7 +35,9 @@ class ScSlPerf:
 
         for orb in slam_dyn:
             time_used, trans_errors, rot_errors = evaluate_RPE_dist(gt, orb)
-            raw_data_single = {"time": time_used, "RPE_trans": trans_errors, "RPE_rot": rot_errors}
+            raw_data_single = {"time": time_used, "RPE_trans": trans_errors, "RPE_rot": rot_errors,
+                               "plotstyle": orb.plotstyle, "label": orb.label}
+            self.slam_dyn.append(slam_dyn)
             self.raw_data_dyn.append(raw_data_single)
             self.rmse_trans_dynamic.append(calc_rmse(trans_errors))
             self.rmse_rot_dynamic.append(calc_rmse(rot_errors))
@@ -43,11 +50,36 @@ class ScSlPerf:
 
         self.StatVsDyn = (statvsdyn_trans, statvsdyn_rot)
 
+    def ShowScSl(self):
+        for index, static_data in enumerate(self.raw_data_stat):
+            t = static_data["time"]
+            stat_trans = static_data["RPE_trans"]
+            stat_rot = static_data["RPE_rot"]
+            orb_label = static_data["label"]
+            orb_plotstyle = static_data["plotstyle"]
+            plt.figure("RPE Magnitude over distance")
+            plt.subplot(2, 1, 1)
+            plt.plot(t, stat_trans, orb_plotstyle, label=orb_label)
+            plt.xlabel("time [s]")
+            plt.ylabel("translational error [-]")
+
+            plt.subplot(2, 1, 2)
+            plt.plot(t, stat_rot, orb_plotstyle, label=orb_label)
+            plt.xlabel("time [s]")
+            plt.ylabel("rotational error [deg/m]")
+            plt.legend()
+
+
+        plt.show()
+
+
+
+
 
 def main():
     """Describes the performance of a certain scenario in a certain starting location"""
-    Town = 1
-    SL = 0
+    Town = 3
+    SL = 132
     ds = 20
     base_dir = "/home/sietse/results_carla0.9/stuckbehindvan/20fps/"
 
@@ -57,7 +89,9 @@ def main():
     orb_dynamic, gt = InspectJsonFileInDir(Town, SL, base_dir, dir_name_dyn)
 
     ScSlTest = ScSlPerf(ds, Town, SL, orb_static, orb_dynamic, gt)
-    print(ScSlTest.StatVsDyn)
+    print(ScSlTest.rmse_trans_static_avg)
+    print(ScSlTest.rmse_rot_static_avg)
+    ScSlTest.ShowScSl()
 
     # raw_data = []
     # RMSE_trans_data = []
