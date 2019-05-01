@@ -7,51 +7,73 @@ import pdb
 import math
 
 
-class ScSlPerf:
+class ScenarioLocationPerformance:
     def __init__(self, ds, Town, SL, slam_stat, slam_dyn, gt):
+        # description of scenario
         self.scenario = {"Scenario": "Stuck behind van", " Distance": ds}
         self.location = {"Town": Town, "Location": SL}
-        # contains the list of crs objects
+        # contains the list of all crs objects static
         self.slam_stat = []
+        # contains list of all crs objects dynamic
         self.slam_dyn = []
-        self.raw_data_stat = []
-        self.raw_data_dyn = []
-        self.rmse_trans_static = []
-        self.rmse_rot_static = []
-        self.rmse_trans_dynamic = []
-        self.rmse_rot_dynamic = []
 
+        # raw RPE dist data in a dict form. Everything is here to make a plot that explains everything
+        self.raw_rpe_stat = []
+        self.raw_rpe_dyn = []
+
+        # Root mean square error translational and rotational dynamic and static of each sequence
+        self.rmse_static = []
+        self.rmse_dynamic = []
+
+        # average root mean square error translational and rotational component, static and dynamic
+        self.rmse_static_avg = ()
+        self.rmse_dynamic_avg = ()
+
+        # Percentage improvement dynamic over static
+        self.StatVsDynamic_avg = ()
+
+        # save the crf data in lists
         for orb in slam_stat:
-            time_used, trans_errors, rot_errors = evaluate_RPE_dist(gt, orb)
-            raw_data_single = {"time": time_used, "RPE_trans": trans_errors, "RPE_rot": rot_errors,
-                               "plotstyle": orb.plotstyle, "label": orb.label}
-            self.slam_stat.append(slam_stat)
-            self.raw_data_stat.append(raw_data_single)
-            self.rmse_trans_static.append(calc_rmse(trans_errors))
-            self.rmse_rot_static.append(calc_rmse(rot_errors))
-
-        self.rmse_trans_static_avg = sum(self.rmse_trans_static)/len(self.rmse_trans_static)
-        self.rmse_rot_static_avg = sum(self.rmse_rot_static)/len(self.rmse_rot_static)
+            self.slam_stat.append(orb)
 
         for orb in slam_dyn:
-            time_used, trans_errors, rot_errors = evaluate_RPE_dist(gt, orb)
-            raw_data_single = {"time": time_used, "RPE_trans": trans_errors, "RPE_rot": rot_errors,
+            self.slam_dyn.append(orb)
+
+        self.SaveRpeData(gt)
+
+        # self.rmse_trans_dynamic_avg = sum(self.rmse_trans_dynamic)/len(self.rmse_trans_dynamic)
+        # self.rmse_rot_dynamic_avg = sum(self.rmse_rot_dynamic)/len(self.rmse_rot_dynamic)
+        #
+        # statvsdyn_trans = (self.rmse_trans_static_avg-self.rmse_trans_dynamic_avg)/self.rmse_trans_static_avg
+        # statvsdyn_rot = (self.rmse_rot_static_avg - self.rmse_rot_dynamic_avg) / self.rmse_rot_static_avg
+        #
+        # # Compare static vs dynamic
+        # self.StatVsDyn = (statvsdyn_trans, statvsdyn_rot)
+
+    def SaveRpeData(self, gt):
+
+        # Calculate the RPE dist for each sequence and the RMSE
+        for orb in self.slam_stat:
+            time_used, trans_errors, rot_errors = evaluate_RPE_dist(gt, orb, 100)
+            RawRpeSingle = {"time": time_used, "RPE_trans": trans_errors, "RPE_rot": rot_errors,
                                "plotstyle": orb.plotstyle, "label": orb.label}
-            self.slam_dyn.append(slam_dyn)
-            self.raw_data_dyn.append(raw_data_single)
-            self.rmse_trans_dynamic.append(calc_rmse(trans_errors))
-            self.rmse_rot_dynamic.append(calc_rmse(rot_errors))
+            self.raw_rpe_stat.append(RawRpeSingle)
+            orb_rmse = (calc_rmse(trans_errors), calc_rmse(rot_errors))
+            self.rmse_static.append(orb_rmse)
 
-        self.rmse_trans_dynamic_avg = sum(self.rmse_trans_dynamic)/len(self.rmse_trans_dynamic)
-        self.rmse_rot_dynamic_avg = sum(self.rmse_rot_dynamic)/len(self.rmse_rot_dynamic)
+        for orb in self.slam_dyn:
+            time_used, trans_errors, rot_errors = evaluate_RPE_dist(gt, orb, 100)
+            RawRpeSingle = {"time": time_used, "RPE_trans": trans_errors, "RPE_rot": rot_errors,
+                               "plotstyle": orb.plotstyle, "label": orb.label}
+            self.raw_rpe_dyn.append(RawRpeSingle)
+            orb_rmse = (calc_rmse(trans_errors), calc_rmse(rot_errors))
+            self.rmse_dynamic.append(orb_rmse)
 
-        statvsdyn_trans = (self.rmse_trans_static_avg-self.rmse_trans_dynamic_avg)/self.rmse_trans_static_avg
-        statvsdyn_rot = (self.rmse_rot_static_avg - self.rmse_rot_dynamic_avg) / self.rmse_rot_static_avg
 
-        self.StatVsDyn = (statvsdyn_trans, statvsdyn_rot)
 
-    def ShowScSl(self):
-        for index, static_data in enumerate(self.raw_data_stat):
+    def ShowRpeDistAll(self):
+        """Plots the RPE dist of all the data that is used to make a Scenario Location specific performance class"""
+        for index, static_data in enumerate(self.raw_rpe_stat):
             t = static_data["time"]
             stat_trans = static_data["RPE_trans"]
             stat_rot = static_data["RPE_rot"]
@@ -69,11 +91,26 @@ class ScSlPerf:
             plt.ylabel("rotational error [deg/m]")
             plt.legend()
 
+        for index, data in enumerate(self.raw_rpe_dyn):
+            t = data["time"]
+            dyn_trans = data["RPE_trans"]
+            dyn_rot = data["RPE_rot"]
+            orb_label = data["label"]
+            orb_plotstyle = data["plotstyle"]
+            plt.figure("RPE Magnitude over distance")
+            plt.subplot(2, 1, 1)
+            plt.plot(t, dyn_trans, orb_plotstyle, label=orb_label)
+            plt.xlabel("time [s]")
+            plt.ylabel("translational error [-]")
+
+            plt.subplot(2, 1, 2)
+            plt.plot(t, dyn_rot, orb_plotstyle, label=orb_label)
+            plt.xlabel("time [s]")
+            plt.ylabel("rotational error [deg/m]")
+            plt.legend()
+
 
         plt.show()
-
-
-
 
 
 def main():
@@ -88,10 +125,11 @@ def main():
     orb_static, gt = InspectJsonFileInDir(Town, SL, base_dir, dir_name_stat)
     orb_dynamic, gt = InspectJsonFileInDir(Town, SL, base_dir, dir_name_dyn)
 
-    ScSlTest = ScSlPerf(ds, Town, SL, orb_static, orb_dynamic, gt)
+    ScSlTest = ScenarioLocationPerformance(ds, Town, SL, orb_static, orb_dynamic, gt)
+    pdb.set_trace()
     print(ScSlTest.rmse_trans_static_avg)
     print(ScSlTest.rmse_rot_static_avg)
-    ScSlTest.ShowScSl()
+    ScSlTest.ShowRpeDistAll()
 
     # raw_data = []
     # RMSE_trans_data = []
