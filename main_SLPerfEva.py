@@ -25,6 +25,10 @@ class ScenarioLocationPerformance:
         self.rmse_static = []
         self.rmse_dynamic = []
 
+        # ratio that lost track of location
+        self.lost_track_static = ()
+        self.lost_track_dynamic = ()
+
         # average root mean square error translational and rotational component, static and dynamic
         self.rmse_static_avg = ()
         self.rmse_dynamic_avg = ()
@@ -39,7 +43,11 @@ class ScenarioLocationPerformance:
         for orb in slam_dyn:
             self.slam_dyn.append(orb)
 
+        # get the RPE performance from this data
         self.SaveRpeData(gt)
+        filter_index_stat, filter_index_dyn = self.IndexUnsuccesfullTracking(gt)
+
+        # find and filter all data that loose track during orb estimation
 
         # self.rmse_trans_dynamic_avg = sum(self.rmse_trans_dynamic)/len(self.rmse_trans_dynamic)
         # self.rmse_rot_dynamic_avg = sum(self.rmse_rot_dynamic)/len(self.rmse_rot_dynamic)
@@ -50,9 +58,38 @@ class ScenarioLocationPerformance:
         # # Compare static vs dynamic
         # self.StatVsDyn = (statvsdyn_trans, statvsdyn_rot)
 
-    def SaveRpeData(self, gt):
+    def FilterSuccesfullTracking(self, gt):
+        """Outputs all the indices that have not succesfully tracked the complete trajectory"""
 
-        # Calculate the RPE dist for each sequence and the RMSE
+        end_time = gt.time[-1]
+        index_succes_tracking_stat = []
+        nr_failed_tracking_stat = 0.0
+        index_succes_tracking_dyn = []
+        nr_failed_tracking_dyn = 0.0
+
+        # time threshold where a trajectory is still completed wrt ground truth
+        time_thres = 0.3
+
+        for index, orb in enumerate(self.slam_stat):
+            if (end_time - time_thres) < orb.time[-1] < end_time:
+                index_succes_tracking_stat.append(index)
+            else:
+                nr_failed_tracking_stat += 1.0
+
+        self.lost_track_static = nr_failed_tracking_stat/len(self.slam_stat)
+
+        for index, orb in enumerate(self.slam_dyn):
+            if (end_time - time_thres) < orb.time[-1] < end_time:
+                index_succes_tracking_dyn.append(index)
+            else:
+                nr_failed_tracking_dyn += 1.0
+
+        self.lost_track_dynamic = nr_failed_tracking_dyn/len(self.slam_dyn)
+
+        return index_succes_tracking_stat, index_succes_tracking_dyn
+
+    def SaveRpeData(self, gt):
+        """Calculate the RPE dist for each sequence and the RMSE"""
         for orb in self.slam_stat:
             time_used, trans_errors, rot_errors = evaluate_RPE_dist(gt, orb, 100)
             RawRpeSingle = {"time": time_used, "RPE_trans": trans_errors, "RPE_rot": rot_errors,
@@ -109,7 +146,6 @@ class ScenarioLocationPerformance:
             plt.ylabel("rotational error [deg/m]")
             plt.legend()
 
-
         plt.show()
 
 
@@ -125,11 +161,9 @@ def main():
     orb_static, gt = InspectJsonFileInDir(Town, SL, base_dir, dir_name_stat)
     orb_dynamic, gt = InspectJsonFileInDir(Town, SL, base_dir, dir_name_dyn)
 
-    ScSlTest = ScenarioLocationPerformance(ds, Town, SL, orb_static, orb_dynamic, gt)
+    Test = ScenarioLocationPerformance(ds, Town, SL, orb_static, orb_dynamic, gt)
     pdb.set_trace()
-    print(ScSlTest.rmse_trans_static_avg)
-    print(ScSlTest.rmse_rot_static_avg)
-    ScSlTest.ShowRpeDistAll()
+    Test.ShowRpeDistAll()
 
     # raw_data = []
     # RMSE_trans_data = []
