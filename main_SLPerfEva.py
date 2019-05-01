@@ -5,6 +5,7 @@ from matplotlib import pyplot as plt
 from main_InspectData import DirName, InspectJsonFileInDir
 import pdb
 import math
+import numpy as np
 
 
 class ScenarioLocationPerformance:
@@ -45,9 +46,15 @@ class ScenarioLocationPerformance:
 
         # get the RPE performance from this data
         self.SaveRpeData(gt)
-        filter_index_stat, filter_index_dyn = self.IndexUnsuccesfullTracking(gt)
 
         # find and filter all data that loose track during orb estimation
+        filter_index_stat, filter_index_dyn = self.FilterSuccesfullTracking(gt)
+        tracked_raw_rpe_stat = [self.raw_rpe_stat[index] for index in filter_index_stat]
+        tracked_raw_rpe_dyn = [self.raw_rpe_dyn[index] for index in filter_index_dyn]
+        tracked_slam_stat = [self.slam_stat[index] for index in filter_index_stat]
+        tracked_slam_dyn = [self.slam_dyn[index] for index in filter_index_dyn]
+
+        false_loop_dyn = self.FilterFalseLoopClosure(tracked_slam_dyn)
 
         # self.rmse_trans_dynamic_avg = sum(self.rmse_trans_dynamic)/len(self.rmse_trans_dynamic)
         # self.rmse_rot_dynamic_avg = sum(self.rmse_rot_dynamic)/len(self.rmse_rot_dynamic)
@@ -57,6 +64,27 @@ class ScenarioLocationPerformance:
         #
         # # Compare static vs dynamic
         # self.StatVsDyn = (statvsdyn_trans, statvsdyn_rot)
+
+    def FilterFalseLoopClosure(self, tracked_slam):
+        # threshold is expected
+        # expected_dist = 15.0/3.6/20
+        threshold = 2
+        all_travels = {}
+        false_loop_index = []
+        for index_orb, orb in enumerate(tracked_slam):
+            travels = []
+            for index, position in enumerate(orb.positions[:-2]):
+                travelled_step = np.linalg.norm(orb.positions[index+1]-position)
+                travels.append(travelled_step)
+                if travelled_step > threshold:
+                    false_loop_index.append(index_orb)
+                    break
+
+            all_travels[index_orb] = travels
+
+        return false_loop_index
+
+
 
     def FilterSuccesfullTracking(self, gt):
         """Outputs all the indices that have not succesfully tracked the complete trajectory"""
@@ -153,7 +181,7 @@ def main():
     """Describes the performance of a certain scenario in a certain starting location"""
     Town = 3
     SL = 132
-    ds = 20
+    ds = 10
     base_dir = "/home/sietse/results_carla0.9/stuckbehindvan/20fps/"
 
     dir_name_stat = DirName(Town, SL, "static")
@@ -162,7 +190,7 @@ def main():
     orb_dynamic, gt = InspectJsonFileInDir(Town, SL, base_dir, dir_name_dyn)
 
     Test = ScenarioLocationPerformance(ds, Town, SL, orb_static, orb_dynamic, gt)
-    pdb.set_trace()
+    # pdb.set_trace()
     Test.ShowRpeDistAll()
 
     # raw_data = []
