@@ -1,15 +1,16 @@
 import json
-from func_ConvertCrf2Json import json2crf
+from func_Convert2Json import json2crf
 from evaluate_pose import *
 from matplotlib import pyplot as plt
-from evaluate_RPE_dist import evaluate_RPE_dist
+from func_EvaluateRpeDist import evaluate_RPE_dist
+import pdb
 
 # check on 1 starting location with 1 scenario, look at the poses, select inliers
 
 def main():
-    Town = 1
-    SL = 0
-    ds = 15
+    Town = 3
+    SL = 132
+    ds = 20
 
     base_dir = "/home/sietse/results_carla0.9/stuckbehindvan/20fps/"
     dir_name_stat = DirName(Town, SL, "static")
@@ -29,10 +30,14 @@ def main():
         methods.append(orb)
         SLAM.append(orb)
         GT.append(gt)
+    # pdb.set_trace()
     methods.append(gt)
 
-    VisualizeData(methods, GT, SLAM)
+    VisualizeData(methods)
+    # for orb in SLAM:
+    #     evaluate_RPE_dist(gt, orb, 100)
 
+    plt.show()
 
     # reject the outliers
     # selection = range(5)
@@ -74,12 +79,11 @@ def InspectJsonFileInDir(Town, SL, base_dir, dir_name):
     return orb_data, gt
 
 
-def VisualizeData(methods, GT, SLAM):
+def VisualizeData(methods):
     evaluate_trajectory(methods)
     compare_position(methods)
     compare_euler_angles(methods)
-    evaluate_RPE_dist(GT, SLAM, 100)
-    plt.show()
+
 
 def ExportOrbSelection(selection, dir):
     file_name = dir + "orb_selection.txt"
