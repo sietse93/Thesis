@@ -339,22 +339,3 @@ def myround(x, base=10):
     """rounds the number to the nearest base, in this case 10
  ORB has jumps that go from -175 to 175, which are not detected if the round() function is used"""
     return int(round(x/base))*base
-
-
-def main():
-    method_gt = "gt"
-    gt_ps_static = 'k-'
-    gt_file_static = "/home/sietse/PrelimExpStaticVsDynamic/SL_58_NV_0_SV_1_gt.txt"
-    with CarlaSlamEvaluate(method_gt, gt_file_static, gt_ps_static) as gt_static:
-        gt_static.process_data()
-
-    method_orb = "orb"
-    orb_ps_static = 'g-'
-    orb_file_static = "/home/sietse/PrelimExpStaticVsDynamic/SL_58_NV_0_SV_1_orb.txt"
-
-    with CarlaSlamEvaluate(method_orb, orb_file_static, orb_ps_static) as orb_static:
-        orb_static.process_data()
-
-
-if __name__=="__main__":
-    main()
