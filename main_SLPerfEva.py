@@ -11,7 +11,7 @@ import numpy as np
 class ScenarioLocationPerformance:
     def __init__(self, ds, Town, SL, slam_stat, slam_dyn, gt):
         # description of scenario
-        self.scenario = {"Scenario": "Stuck behind van", " Distance": ds}
+        self.scenario = {"Scenario": "Stuck behind van", "Distance": ds}
         self.location = {"Town": Town, "Location": SL}
         # contains the list of all crs objects static
         self.slam_stat = []
@@ -22,7 +22,11 @@ class ScenarioLocationPerformance:
         self.raw_rpe_stat = []
         self.raw_rpe_dyn = []
 
-        # Root mean square error translational and rotational dynamic and static of each sequence
+        # filtered RPE dist data in dict form. All failed tracking and false loop closure are removed
+        self.filtered_rpe_stat = []
+        self.filtered_rpe_dyn = []
+
+        # Root mean square error translational and rotational dynamic and static of each filtered sequence
         self.rmse_static = []
         self.rmse_dynamic = []
 
@@ -30,12 +34,21 @@ class ScenarioLocationPerformance:
         self.lost_track_static = ()
         self.lost_track_dynamic = ()
 
+        # ratio that had false loop closure
+        # NOTE: THIS DETECTS ANY LOOP CLOSURES, NOT FALSE LOOP CLOSURES
+        self.false_loop_static = ()
+        self.false_loop_dynamic = ()
+
+        # total ratio that is filtered out due to false loop closure or lost track
+        self.ratio_filtered_static = ()
+        self.ratio_filtered_dynamic = ()
+
         # average root mean square error translational and rotational component, static and dynamic
         self.rmse_static_avg = ()
         self.rmse_dynamic_avg = ()
 
         # Percentage improvement dynamic over static
-        self.StatVsDynamic_avg = ()
+        self.static_vs_dynamic_avg = ()
 
         # save the crf data in lists
         for orb in slam_stat:
@@ -54,37 +67,127 @@ class ScenarioLocationPerformance:
         tracked_slam_stat = [self.slam_stat[index] for index in filter_index_stat]
         tracked_slam_dyn = [self.slam_dyn[index] for index in filter_index_dyn]
 
-        false_loop_dyn = self.FilterFalseLoopClosure(tracked_slam_dyn)
+        # find and filter all data that have false loop closure and store data in class
+        correct_loop_dyn = self.FilterFalseLoopClosure(tracked_slam_dyn)
+        self.ratio_filtered_dynamic = 1.0 - float(len(correct_loop_dyn))/float(len(self.slam_dyn))
+        self.false_loop_dynamic = self.ratio_filtered_dynamic - self.lost_track_dynamic
 
-        # self.rmse_trans_dynamic_avg = sum(self.rmse_trans_dynamic)/len(self.rmse_trans_dynamic)
-        # self.rmse_rot_dynamic_avg = sum(self.rmse_rot_dynamic)/len(self.rmse_rot_dynamic)
-        #
-        # statvsdyn_trans = (self.rmse_trans_static_avg-self.rmse_trans_dynamic_avg)/self.rmse_trans_static_avg
-        # statvsdyn_rot = (self.rmse_rot_static_avg - self.rmse_rot_dynamic_avg) / self.rmse_rot_static_avg
-        #
-        # # Compare static vs dynamic
-        # self.StatVsDyn = (statvsdyn_trans, statvsdyn_rot)
+        correct_loop_stat = self.FilterFalseLoopClosure(tracked_slam_stat)
+        self.ratio_filtered_static = 1.0 - float(len(correct_loop_stat))/float(len(self.slam_stat))
+        self.false_loop_static = self.ratio_filtered_static - self.lost_track_static
+
+        self.filtered_rpe_stat = [tracked_raw_rpe_stat[index] for index in correct_loop_stat]
+        self.filtered_rpe_dyn = [tracked_raw_rpe_dyn[index] for index in correct_loop_dyn]
+
+        # calculate Root Mean Square Error of the filtered data
+        for filtered_rpe_data in self.filtered_rpe_stat:
+            trans_errors = filtered_rpe_data["RPE_trans"]
+            rot_errors = filtered_rpe_data["RPE_rot"]
+            orb_rmse = (calc_rmse(trans_errors), calc_rmse(rot_errors))
+            self.rmse_static.append(orb_rmse)
+
+        for filtered_rpe_data in self.filtered_rpe_dyn:
+            trans_errors = filtered_rpe_data["RPE_trans"]
+            rot_errors = filtered_rpe_data["RPE_rot"]
+            orb_rmse = (calc_rmse(trans_errors), calc_rmse(rot_errors))
+            self.rmse_dynamic.append(orb_rmse)
+
+        # calculate average performance of the filtered data
+        self.CalculateAverageRMSE()
+
+        # compare static performance vs dynamic performance
+        self.CompareAvgStaticVsDynamic()
+
+    def SummaryPerformance(self):
+        """Prints a summary of the performance of the scenario and location"""
+
+        print("PERFORMANCE SUMMARY \nTown {}, Starting location {}, Scenario: {} - {}m \n".format(self.location["Town"], self.location["Location"], self.scenario["Scenario"], self.scenario["Distance"]))
+        print("Dynamic scenario\n"
+              "----------------\n"
+              "Filtered out:                    {}\n"
+              "Track failure:                   {}\n"
+              "False loops:                     {}\n"
+              "Increase error wrt static [%]:   {}\n"
+              "RMSE RPE:                        {}\n".format(self.ratio_filtered_dynamic,
+                                                       self.lost_track_dynamic,
+                                                       self.false_loop_dynamic,
+                                                       self.static_vs_dynamic_avg,
+                                                       self.rmse_dynamic_avg))
+        print("Static scenario\n"
+              "----------------\n"
+              "Filtered out:                    {}\n"
+              "Track failure:                   {}\n"
+              "False loops:                     {}\n"
+              "RMSE RPE:                        {}\n".format(self.ratio_filtered_static,
+                                                             self.lost_track_static,
+                                                             self.false_loop_static,
+                                                             self.rmse_static_avg))
+
+
+
+    def CompareAvgStaticVsDynamic(self):
+        stat_vs_dyn_trans = (self.rmse_dynamic_avg[0] - self.rmse_static_avg[0] )/self.rmse_static_avg[0]*100.0
+        stat_vs_dyn_rot = (self.rmse_dynamic_avg[1] - self.rmse_static_avg[1])/self.rmse_static_avg[1]*100.0
+        self.static_vs_dynamic_avg = (stat_vs_dyn_trans, stat_vs_dyn_rot)
+
+    def CalculateAverageRMSE(self):
+        cum_rmse_static_trans = 0.0
+        cum_rmse_static_rot = 0.0
+
+        for rmse in self.rmse_static:
+            cum_rmse_static_trans += rmse[0]
+            cum_rmse_static_rot += rmse[1]
+
+        self.rmse_static_avg = (cum_rmse_static_trans/float(len(self.rmse_static)),
+                                cum_rmse_static_rot/float(len(self.rmse_static)))
+
+        cum_rmse_dynamic_trans = 0.0
+        cum_rmse_dynamic_rot = 0.0
+
+        for rmse in self.rmse_dynamic:
+            cum_rmse_dynamic_trans += rmse[0]
+            cum_rmse_dynamic_rot += rmse[1]
+
+        self.rmse_dynamic_avg = (cum_rmse_dynamic_trans / float(len(self.rmse_dynamic)),
+                                 cum_rmse_dynamic_rot / float(len(self.rmse_dynamic)))
+
+    def SaveRpeData(self, gt):
+        """Calculate the RPE dist for all sequences and the RMSE"""
+        for orb in self.slam_stat:
+            time_used, trans_errors, rot_errors = evaluate_RPE_dist(gt, orb, 100)
+            RawRpeSingle = {"time": time_used, "RPE_trans": trans_errors, "RPE_rot": rot_errors,
+                            "plotstyle": orb.plotstyle, "label": orb.label}
+            self.raw_rpe_stat.append(RawRpeSingle)
+
+
+        for orb in self.slam_dyn:
+            time_used, trans_errors, rot_errors = evaluate_RPE_dist(gt, orb, 100)
+            RawRpeSingle = {"time": time_used, "RPE_trans": trans_errors, "RPE_rot": rot_errors,
+                            "plotstyle": orb.plotstyle, "label": orb.label}
+            self.raw_rpe_dyn.append(RawRpeSingle)
+
 
     def FilterFalseLoopClosure(self, tracked_slam):
-        # threshold is expected
-        # expected_dist = 15.0/3.6/20
+        """outputs the indices that has succesfully tracked a full trajectory without false loop closing"""
+        # Threshold: if the estimated travelled distance is bigger than 2m in one time step,
+        # than false loop closure is detected
         threshold = 2
         all_travels = {}
-        false_loop_index = []
+        correct_loop_index = []
         for index_orb, orb in enumerate(tracked_slam):
             travels = []
             for index, position in enumerate(orb.positions[:-2]):
                 travelled_step = np.linalg.norm(orb.positions[index+1]-position)
                 travels.append(travelled_step)
                 if travelled_step > threshold:
-                    false_loop_index.append(index_orb)
+                    # false_loop_index.append(index_orb)
                     break
+                if index == len(orb.positions[:-3]):
+                    correct_loop_index.append(index_orb)
 
             all_travels[index_orb] = travels
 
-        return false_loop_index
-
-
+        return correct_loop_index
 
     def FilterSuccesfullTracking(self, gt):
         """Outputs all the indices that have not succesfully tracked the complete trajectory"""
@@ -116,24 +219,42 @@ class ScenarioLocationPerformance:
 
         return index_succes_tracking_stat, index_succes_tracking_dyn
 
-    def SaveRpeData(self, gt):
-        """Calculate the RPE dist for each sequence and the RMSE"""
-        for orb in self.slam_stat:
-            time_used, trans_errors, rot_errors = evaluate_RPE_dist(gt, orb, 100)
-            RawRpeSingle = {"time": time_used, "RPE_trans": trans_errors, "RPE_rot": rot_errors,
-                               "plotstyle": orb.plotstyle, "label": orb.label}
-            self.raw_rpe_stat.append(RawRpeSingle)
-            orb_rmse = (calc_rmse(trans_errors), calc_rmse(rot_errors))
-            self.rmse_static.append(orb_rmse)
+    def ShowRpeDistFiltered(self):
+        for index, static_data in enumerate(self.filtered_rpe_stat):
+            t = static_data["time"]
+            stat_trans = static_data["RPE_trans"]
+            stat_rot = static_data["RPE_rot"]
+            orb_label = static_data["label"]
+            orb_plotstyle = static_data["plotstyle"]
+            plt.figure("RPE Magnitude over distance, filtered")
+            plt.subplot(2, 1, 1)
+            plt.plot(t, stat_trans, orb_plotstyle, label=orb_label)
+            plt.xlabel("time [s]")
+            plt.ylabel("translational error [-]")
 
-        for orb in self.slam_dyn:
-            time_used, trans_errors, rot_errors = evaluate_RPE_dist(gt, orb, 100)
-            RawRpeSingle = {"time": time_used, "RPE_trans": trans_errors, "RPE_rot": rot_errors,
-                               "plotstyle": orb.plotstyle, "label": orb.label}
-            self.raw_rpe_dyn.append(RawRpeSingle)
-            orb_rmse = (calc_rmse(trans_errors), calc_rmse(rot_errors))
-            self.rmse_dynamic.append(orb_rmse)
+            plt.subplot(2, 1, 2)
+            plt.plot(t, stat_rot, orb_plotstyle, label=orb_label)
+            plt.xlabel("time [s]")
+            plt.ylabel("rotational error [deg/m]")
+            plt.legend()
 
+        for index, data in enumerate(self.filtered_rpe_dyn):
+            t = data["time"]
+            dyn_trans = data["RPE_trans"]
+            dyn_rot = data["RPE_rot"]
+            orb_label = data["label"]
+            orb_plotstyle = data["plotstyle"]
+            plt.figure("RPE Magnitude over distance, filtered")
+            plt.subplot(2, 1, 1)
+            plt.plot(t, dyn_trans, orb_plotstyle, label=orb_label)
+            plt.xlabel("time [s]")
+            plt.ylabel("translational error [-]")
+
+            plt.subplot(2, 1, 2)
+            plt.plot(t, dyn_rot, orb_plotstyle, label=orb_label)
+            plt.xlabel("time [s]")
+            plt.ylabel("rotational error [deg/m]")
+            plt.legend()
 
 
     def ShowRpeDistAll(self):
@@ -144,7 +265,7 @@ class ScenarioLocationPerformance:
             stat_rot = static_data["RPE_rot"]
             orb_label = static_data["label"]
             orb_plotstyle = static_data["plotstyle"]
-            plt.figure("RPE Magnitude over distance")
+            plt.figure("RPE Magnitude over distance, unfiltered")
             plt.subplot(2, 1, 1)
             plt.plot(t, stat_trans, orb_plotstyle, label=orb_label)
             plt.xlabel("time [s]")
@@ -162,7 +283,7 @@ class ScenarioLocationPerformance:
             dyn_rot = data["RPE_rot"]
             orb_label = data["label"]
             orb_plotstyle = data["plotstyle"]
-            plt.figure("RPE Magnitude over distance")
+            plt.figure("RPE Magnitude over distance, unfiltered")
             plt.subplot(2, 1, 1)
             plt.plot(t, dyn_trans, orb_plotstyle, label=orb_label)
             plt.xlabel("time [s]")
@@ -174,14 +295,14 @@ class ScenarioLocationPerformance:
             plt.ylabel("rotational error [deg/m]")
             plt.legend()
 
-        plt.show()
+
 
 
 def main():
     """Describes the performance of a certain scenario in a certain starting location"""
     Town = 3
-    SL = 132
-    ds = 10
+    SL = 127
+    ds = 20
     base_dir = "/home/sietse/results_carla0.9/stuckbehindvan/20fps/"
 
     dir_name_stat = DirName(Town, SL, "static")
@@ -190,59 +311,9 @@ def main():
     orb_dynamic, gt = InspectJsonFileInDir(Town, SL, base_dir, dir_name_dyn)
 
     Test = ScenarioLocationPerformance(ds, Town, SL, orb_static, orb_dynamic, gt)
+    Test.SummaryPerformance()
     # pdb.set_trace()
-    Test.ShowRpeDistAll()
-
-    # raw_data = []
-    # RMSE_trans_data = []
-    # RMSE_rot_data = []
-    # for orb in orb_static:
-    #     time_used, trans_errors, rot_errors = evaluate_RPE_dist(gt, orb)
-    #     raw_data_single = {"time": time_used, "RPE_trans": trans_errors, "RPE_rot": rot_errors}
-    #     raw_data.append(raw_data_single)
-    #
-    #     rmse_trans = calc_rmse(trans_errors)
-    #     RMSE_trans_data.append(rmse_trans)
-    #
-    #     rmse_rot = calc_rmse(rot_errors)
-    #     RMSE_rot_data.append(rmse_rot)
-    #
-    #     pdb.set_trace()
-
-
-
-    # orb_dynamic, gt = InspectJsonFileInDir(Town, SL, base_dir, dir_name_dyn)
-
-    # # get the directory
-    # if scenario == "dynamic":
-    #     dir_name = "T{}_SL{}_d{}/".format(Town, SL, ds)
-    # elif scenario == "static":
-    #     dir_name = "T{}_SL{}_s/".format(Town, SL)
-    # else:
-    #     print("scenario is not 'static' nor 'dynamic' ")
-    #     return
-    #
-    # # get the inliers in orb slam selection
-    # orb_selection_loc = base_dir+dir_name+"orb_selection.txt"
-    # json_file = open(orb_selection_loc, 'r')
-    # orb_indices = json.load(json_file)
-    #
-    # file_ext = "_orb_{}_json.txt"
-    # file_loc = base_dir + dir_name
-    # file_name = dir_name[:-1]
-    # orb_data = []
-    # for index in orb_indices:
-    #     json_file_name = file_name + file_ext.format(index)
-    #     orb = json2crf(file_loc, json_file_name)
-    #     orb_data.append(orb)
-    # print(len(orb_data))
-    # dir_name_gt = "T{}_SL{}_s/".format(Town, SL)
-    # json_name_gt = "T{}_SL{}_s_gt_json.txt".format(Town, SL)
-    # gt = json2crf(base_dir + dir_name_gt, json_name_gt)
-    #
-    # gt_data = [gt for orb in orb_data]
-    #
-    # evaluate_RPE_dist(gt_data, orb_data, 100)
+    # Test.ShowRpeDistFiltered()
     # plt.show()
 
 
