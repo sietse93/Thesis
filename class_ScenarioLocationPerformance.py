@@ -1,6 +1,7 @@
 from func_EvaluateRpeDist import evaluate_RPE_dist, calc_rmse
 from matplotlib import pyplot as plt
 import numpy as np
+import pdb
 
 
 class ScenarioLocationPerformance:
@@ -119,32 +120,42 @@ class ScenarioLocationPerformance:
                                                              self.rmse_static_avg))
 
 
-
     def CompareAvgStaticVsDynamic(self):
-        stat_vs_dyn_trans = (self.rmse_dynamic_avg[0] - self.rmse_static_avg[0] )/self.rmse_static_avg[0]*100.0
-        stat_vs_dyn_rot = (self.rmse_dynamic_avg[1] - self.rmse_static_avg[1])/self.rmse_static_avg[1]*100.0
-        self.static_vs_dynamic_avg = (stat_vs_dyn_trans, stat_vs_dyn_rot)
+        if self.rmse_dynamic_avg == None or self.rmse_static_avg == None:
+            self.static_vs_dynamic_avg = None
+        else:
+            stat_vs_dyn_trans = (self.rmse_dynamic_avg[0] - self.rmse_static_avg[0] )/self.rmse_static_avg[0]*100.0
+            stat_vs_dyn_rot = (self.rmse_dynamic_avg[1] - self.rmse_static_avg[1])/self.rmse_static_avg[1]*100.0
+            self.static_vs_dynamic_avg = (stat_vs_dyn_trans, stat_vs_dyn_rot)
 
     def CalculateAverageRMSE(self):
+        """Takes the average of the filtered RMSE"""
         cum_rmse_static_trans = 0.0
         cum_rmse_static_rot = 0.0
 
-        for rmse in self.rmse_static:
-            cum_rmse_static_trans += rmse[0]
-            cum_rmse_static_rot += rmse[1]
+        # Only average if there is anything to average
+        if self.ratio_filtered_static != 1.0:
+            for rmse in self.rmse_static:
+                cum_rmse_static_trans += rmse[0]
+                cum_rmse_static_rot += rmse[1]
 
-        self.rmse_static_avg = (cum_rmse_static_trans/float(len(self.rmse_static)),
-                                cum_rmse_static_rot/float(len(self.rmse_static)))
+            self.rmse_static_avg = (cum_rmse_static_trans/float(len(self.rmse_static)),
+                                    cum_rmse_static_rot/float(len(self.rmse_static)))
+        else:
+            self.rmse_static_avg = None
 
         cum_rmse_dynamic_trans = 0.0
         cum_rmse_dynamic_rot = 0.0
 
-        for rmse in self.rmse_dynamic:
-            cum_rmse_dynamic_trans += rmse[0]
-            cum_rmse_dynamic_rot += rmse[1]
+        if self.ratio_filtered_dynamic != 1.0:
+            for rmse in self.rmse_dynamic:
+                cum_rmse_dynamic_trans += rmse[0]
+                cum_rmse_dynamic_rot += rmse[1]
 
-        self.rmse_dynamic_avg = (cum_rmse_dynamic_trans / float(len(self.rmse_dynamic)),
-                                 cum_rmse_dynamic_rot / float(len(self.rmse_dynamic)))
+            self.rmse_dynamic_avg = (cum_rmse_dynamic_trans / float(len(self.rmse_dynamic)),
+                                     cum_rmse_dynamic_rot / float(len(self.rmse_dynamic)))
+        else:
+            self.rmse_dynamic_avg = None
 
     def SaveRpeData(self, gt):
         """Calculate the RPE dist for all sequences and the RMSE"""
