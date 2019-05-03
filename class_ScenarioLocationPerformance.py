@@ -43,7 +43,7 @@ class ScenarioLocationPerformance:
         self.rmse_static_avg = ()
         self.rmse_dynamic_avg = ()
 
-        # Percentage improvement dynamic over static
+        # Percentage increase error dynamic over static
         self.static_vs_dynamic_avg = ()
 
         # save the crf data in lists
