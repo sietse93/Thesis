@@ -1,8 +1,8 @@
 import json
 from func_Convert2Json import json2crf
 from evaluate_pose import *
+from class_ScenarioLocationPerformance import *
 from matplotlib import pyplot as plt
-from func_EvaluateRpeDist import evaluate_RPE_dist
 import pdb
 
 # check on 1 starting location with 1 scenario, look at the poses, select inliers
@@ -10,7 +10,7 @@ import pdb
 def main():
     Town = 3
     SL = 132
-    ds = 20
+    ds = 10
 
     base_dir = "/home/sietse/results_carla0.9/stuckbehindvan/20fps/"
     dir_name_stat = DirName(Town, SL, "static")
@@ -34,8 +34,12 @@ def main():
     methods.append(gt)
 
     VisualizeData(methods)
-    # for orb in SLAM:
-    #     evaluate_RPE_dist(gt, orb, 100)
+
+    LocalPerformance = ScenarioLocationPerformance(ds, Town, SL, orb_static, orb_dynamic, gt)
+
+    LocalPerformance.ShowRpeDistAll()
+    LocalPerformance.ShowRpeDistFiltered()
+    LocalPerformance.SummaryPerformance()
 
     plt.show()
 
