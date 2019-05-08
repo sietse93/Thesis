@@ -39,9 +39,11 @@ class ScenarioLocationPerformance:
         self.ratio_filtered_static = ()
         self.ratio_filtered_dynamic = ()
 
-        # average root mean square error translational and rotational component, static and dynamic
+        # average and variance root mean square error translational and rotational component, static and dynamic
         self.rmse_static_avg = ()
+        self.rmse_static_var = ()
         self.rmse_dynamic_avg = ()
+        self.rmse_dynamic_var = ()
 
         # Percentage increase error dynamic over static
         self.static_vs_dynamic_avg = ()
@@ -130,20 +132,26 @@ class ScenarioLocationPerformance:
             self.static_vs_dynamic_avg = (stat_vs_dyn_trans, stat_vs_dyn_rot)
 
     def CalculateAverageRMSE(self):
+        """Calculate the average and variance of starting location"""
 
         if self.ratio_filtered_static == 1.0:
             self.rmse_static_avg = None
+            self.rmse_static_var = None
         else:
             rmse_trans_static = np.array([rmse[0] for rmse in self.rmse_static])
             rmse_rot_static = np.array([rmse[1] for rmse in self.rmse_static])
-            self.rmse_static_avg = (round(np.mean(rmse_trans_static), 4), round(np.mean(rmse_rot_static), 4))
+            self.rmse_static_avg = (np.mean(rmse_trans_static), np.mean(rmse_rot_static))
+            self.rmse_static_var = (np.var(rmse_trans_static), np.var(rmse_rot_static))
 
         if self.ratio_filtered_dynamic == 1.0:
             self.rmse_dynamic_avg = None
+            self.rmse_dynamic_var = None
         else:
             rmse_trans_dynamic = np.array([rmse[0] for rmse in self.rmse_dynamic])
             rmse_rot_dynamic = np.array([rmse[1] for rmse in self.rmse_dynamic])
-            self.rmse_dynamic_avg = (round(np.mean(rmse_trans_dynamic), 4), round(np.mean(rmse_rot_dynamic), 4))
+            self.rmse_dynamic_avg = (np.mean(rmse_trans_dynamic), np.mean(rmse_rot_dynamic))
+            self.rmse_dynamic_var = (np.var(rmse_trans_dynamic), np.var(rmse_rot_dynamic))
+
 
     def SaveRpeData(self, gt):
         """Calculate the RPE dist for all sequences and the RMSE"""
