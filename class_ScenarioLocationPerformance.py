@@ -94,6 +94,8 @@ class ScenarioLocationPerformance:
         # compare static performance vs dynamic performance
         self.CompareAvgStaticVsDynamic()
 
+
+
     def SummaryPerformance(self):
         """Prints a summary of the performance of the scenario and location"""
 
@@ -139,8 +141,8 @@ class ScenarioLocationPerformance:
                 cum_rmse_static_trans += rmse[0]
                 cum_rmse_static_rot += rmse[1]
 
-            self.rmse_static_avg = (cum_rmse_static_trans/float(len(self.rmse_static)),
-                                    cum_rmse_static_rot/float(len(self.rmse_static)))
+            self.rmse_static_avg = (round(cum_rmse_static_trans/float(len(self.rmse_static)), 4),
+                                    round(cum_rmse_static_rot/float(len(self.rmse_static)), 4))
         else:
             self.rmse_static_avg = None
 
@@ -152,8 +154,8 @@ class ScenarioLocationPerformance:
                 cum_rmse_dynamic_trans += rmse[0]
                 cum_rmse_dynamic_rot += rmse[1]
 
-            self.rmse_dynamic_avg = (cum_rmse_dynamic_trans / float(len(self.rmse_dynamic)),
-                                     cum_rmse_dynamic_rot / float(len(self.rmse_dynamic)))
+            self.rmse_dynamic_avg = (round(cum_rmse_dynamic_trans / float(len(self.rmse_dynamic)), 4),
+                                     round(cum_rmse_dynamic_rot / float(len(self.rmse_dynamic)), 4))
         else:
             self.rmse_dynamic_avg = None
 
