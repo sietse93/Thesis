@@ -101,13 +101,18 @@ class ScenarioPerformance:
         """Creates table for latex purposes"""
 
         # general format of table
-        format_table = r"\begin{table}[h!]" + "\n" + r"\centering" + "\n" + r"\begin{tabular}{c c|c|c|c|c} \hline" + "\n"
+        format_table = r"\begin{table}[h!]" + "\n" + r"\centering" + "\n" + \
+                       r"\begin{tabular}{m{1cm} m{5mm}|m{15mm}|m{15mm}|m{15mm}|m{15mm}|m{15mm}|m{20mm}} \hline" + "\n"
 
         # generate static table
-        title_static = r"\multicolumn{6}{c}{Static scenario}\\\hline\hline" + "\n"
+        title_static = r"\multicolumn{8}{c}{Static scenario}\\\hline\hline" + "\n"
 
         # strings in column
-        string_columns = r" & Nr & RMSE RPE trans. [-] & RMSE RPE rot. [deg/m] & tracking failure [\%] & false loop closure [\%] \\\hline" +"\n"
+        string_columns = r"Map & Nr & \multicolumn{2}{c|}{RMSE RPE trans. [-]} & " \
+                         r"\multicolumn{2}{c|}{RMSE RPE rot. [deg/m]} &  &  \\" \
+                         r"& & \multicolumn{1}{c}{Average} & \multicolumn{1}{c|}{Variance} & " \
+                         r"\multicolumn{1}{c}{Average} & \multicolumn{1}{c|}{Variance} & " \
+                         r"tracking \newline failure [\%]& false loop closure [\%] \\\hline" + "\n"
 
         # static data town
         table_content = ""
@@ -122,14 +127,15 @@ class ScenarioPerformance:
             else:
                 town_column = ""
             location_data = list_scenario_performance[i]
-            table_data = "& {} & {} & {} & {} & {}"
-            row_data = town_column + table_data.format(i, location_data.rmse_static_avg[0], location_data.rmse_static_avg[1],
-                              location_data.lost_track_static, location_data.false_loop_static) + r"\\" + "\n"
+            table_data = "& {} & {} & {} & {} & {} & {} & {}"
+            row_data = town_column + table_data.format(i, location_data.rmse_static_avg[0],
+                                                       location_data.rmse_static_var[0],
+                                                       location_data.rmse_static_avg[1],
+                                                       location_data.rmse_static_var[0],
+                                                       location_data.lost_track_static,
+                                                       location_data.false_loop_static) + r"\\" + "\n"
             table_content += row_data
-        # row1 = r"\multirow{3}{4em}{Town01}" + " & 1 & {0:.4f} & {0:.4f} & {0:.1f} & {0:.1f} ".format(list_scenario_performance[0].rmse_static_avg[0],
-        #                                                                          list_scenario_performance[0].rmse_static_avg[1],
-        #                                                                          list_scenario_performance[0].lost_track_static,
-        #                                                                          list_scenario_performance[0].false_loop_static) + r"\\" + "\n"
+
         # finish table
         end_table = r"\end{tabular}" + "\n" + r"\caption{Caption}" + "\n" + r"\label{tab:my_label}" + "\n" + r"\end{table}"
         final_table = format_table + title_static + string_columns + table_content + end_table
