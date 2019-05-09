@@ -6,7 +6,7 @@ import time
 def main():
     """Describes the performance of a certain scenario in a certain starting location"""
     Towns = (1, 2, 3)
-    ds = 15
+    ds = 20
     base_dir = "/home/sietse/results_carla0.9/stuckbehindvan/20fps/"
 
     scenario_performance_data = []
@@ -32,8 +32,8 @@ def main():
     A = ScenarioPerformance(scenario_performance_data)
     #A.CreateLatexTable(scenario_performance_data)
     # A.SummaryPerformance()
-    print(A.LatexTableStatic)
-    print(A.LatexTableDynamic)
+    # print(A.LatexTableStatic)
+    print(A.LatexTableDiscussion)
     pdb.set_trace()
 
 
@@ -98,34 +98,36 @@ class ScenarioPerformance:
                                       (len(list_scenario_performance)-nr_all_data_filtered),
                                       total_static_vs_dynamic_rot /
                                       (len(list_scenario_performance)-nr_all_data_filtered))
-        self.LatexTableStatic = ""
-        self.LatexTableDynamic = ""
+        self.LatexTableStaticResults = ""
+        self.LatexTableDynamicResults = ""
+        self.LatexTableDiscussion = ""
 
-        self.CreateLatexTable(list_scenario_performance)
+        self.CreateLatexTableResults(list_scenario_performance)
+        self.CreateLatexTableDiscussion(list_scenario_performance)
 
-    def CreateLatexTable(self, list_scenario_performance):
+    def CreateLatexTableResults(self, list_scenario_performance):
         """Creates table for latex purposes"""
 
         # general format of table
         format_table = r"\begin{table}[h!]" + "\n" + r"\centering" + "\n" + \
-                       r"\begin{tabular}{m{1cm} m{5mm}|m{15mm}|m{15mm}|m{15mm}|m{15mm}|m{15mm}|m{20mm}} \hline" + "\n"
+                       r"\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}l c|c|c|c|c|c|c} \hline" + "\n"
 
         # generate static table
         title_static = r"\multicolumn{8}{c}{Static}\\\hline\hline" + "\n"
         title_dynamic = "\\multicolumn{{8}}{{c}}{{Dynamic: {} - distance: {} m}}\\\\\\hline\\hline".format(self.scenario['Scenario'], self.scenario['Distance']) + "\n"
 
         # strings in column
-        string_columns = r"Map & Nr & \multicolumn{2}{c|}{RMSE RPE trans. [-]} & " \
-                         r"\multicolumn{2}{c|}{RMSE RPE rot. [deg/m]} &  &  \\" \
-                         r"& & \multicolumn{1}{c}{Average} & \multicolumn{1}{c|}{Variance} & " \
-                         r"\multicolumn{1}{c}{Average} & \multicolumn{1}{c|}{Variance} & " \
-                         r"tracking \newline failure [\%]& false loop closure [\%] \\\hline" + "\n"
+        string_columns = r" &  & \multicolumn{2}{c|}{RMSE RPE trans. [-]} & " \
+                         r"\multicolumn{2}{c|}{RMSE RPE rot. [deg/m]} & " \
+                         r"\multirow{2}{*}{\makecell[c]{Tracking \\ failure [\%]}} & " \
+                         r"\multirow{2}{*}{\makecell[c]{False loop \\ closure [\%]}}\\"\
+                         r"Map & Nr & \multicolumn{1}{c}{Average} & \multicolumn{1}{c|}{Variance} " \
+                         r"& \multicolumn{1}{c}{Average} & \multicolumn{1}{c|}{Variance} & &  \\\hline" + "\n"
 
         # static data town
         table_content_static = ""
         table_content_dynamic = ""
-        for i in range(10):
-            row_data = ""
+        for i in range(len(list_scenario_performance)):
             if i == 0:
                 town_column = r"\multirow{3}{4em}{Town01}"
             elif i == 3:
@@ -135,34 +137,94 @@ class ScenarioPerformance:
             else:
                 town_column = ""
             location_data = list_scenario_performance[i]
-            table_data_static = "& {0:d} & {1:.3g} & {2:.3g} & {3:.3g} & {4:.3g} & {5:.1f} & {6:.1f}"
-            row_data_static = town_column + table_data_static.format(i, location_data.rmse_static_avg[0],
-                                                       location_data.rmse_static_var[0],
-                                                       location_data.rmse_static_avg[1],
-                                                       location_data.rmse_static_var[1],
-                                                       location_data.lost_track_static,
-                                                       location_data.false_loop_static) + r"\\" + "\n"
-
-            table_data_dynamic = "& {0:d} & {1:.3g} & {2:.3g} & {3:.3g} & {4:.3g} & {5:.1f} & {6:.1f}"
-            row_data_dynamic = town_column + table_data_dynamic.format(i, location_data.rmse_dynamic_avg[0],
-                                                              location_data.rmse_dynamic_var[0],
-                                                              location_data.rmse_dynamic_avg[1],
-                                                              location_data.rmse_dynamic_var[1],
-                                                              location_data.lost_track_dynamic,
+            if location_data.rmse_static_avg is None:
+                table_data_static = "& {} & {} & {} & {} & {} & {} & {}"
+                row_data_static = town_column + table_data_static.format(i, "(-)", "(-)", "(-)", "(-)",
+                                                                         location_data.lost_track_static,
+                                                                         location_data.false_loop_static) + r"\\" + "\n"
+            else:
+                # table_data_static = "& {0:d} & {1:.3g} & {2:.3g} & {3:.3g} & {4:.3g} & {5:.1f} & {6:.1f}"
+                table_data_static = "& {0:d} & {1:.3e} & {2:.3e} & {3:.3e} & {4:.3e} & {5:.1f} & {6:.1f}"
+                row_data_static = town_column + table_data_static.format(i, location_data.rmse_static_avg[0],
+                                                           location_data.rmse_static_var[0],
+                                                           location_data.rmse_static_avg[1],
+                                                           location_data.rmse_static_var[1],
+                                                           location_data.lost_track_static,
+                                                           location_data.false_loop_static) + r"\\" + "\n"
+            if location_data.rmse_dynamic_avg is None:
+                table_data_dynamic = "& {} & {} & {} & {} & {} & {} & {}"
+                row_data_dynamic = town_column + table_data_dynamic.format(i, "(-)", "(-)", "(-)", "(-)",
+                                                                           location_data.lost_track_dynamic,
+                                                                           location_data.false_loop_dynamic) + r"\\" + "\n"
+            else:
+                table_data_dynamic = "& {0:d} & {1:.3e} & {2:.3e} & {3:.3e} & {4:.3e} & {5:.1f} & {6:.1f}"
+                row_data_dynamic = town_column + table_data_dynamic.format(i, location_data.rmse_dynamic_avg[0],
+                                                                  location_data.rmse_dynamic_var[0],
+                                                                  location_data.rmse_dynamic_avg[1],
+                                                                  location_data.rmse_dynamic_var[1],
+                                                                  location_data.lost_track_dynamic,
                                                               location_data.false_loop_dynamic) + r"\\" + "\n"
-
-
             table_content_static += row_data_static
             table_content_dynamic += row_data_dynamic
 
         # finish table
-        end_table_static = r"\end{tabular}" + "\n" + r"\caption{Performance ORB SLAM in static environment}" + "\n" + r"\label{tab:RmseRpeStaticAll}" + "\n" + r"\end{table}"
-        end_table_dynamic = r"\end{tabular}" + "\n" + r"\caption{Performance ORB SLAM in dynamic environment}" + "\n" + r"\label{tab:RmseRpeDynamicAll}" + "\n" + r"\end{table}"
+        end_table_static = r"\end{tabular*}" + "\n" + r"\caption{Performance ORB SLAM in static environment}" + "\n" + r"\label{tab:RmseRpeStaticAll}" + "\n" + r"\end{table}"
+        end_table_dynamic = r"\end{tabular*}" + "\n" + r"\caption{Performance ORB SLAM in dynamic environment}" + "\n" + r"\label{tab:RmseRpeDynamicAll}" + "\n" + r"\end{table}"
         final_table_static = format_table + title_static + string_columns + table_content_static + end_table_static
         final_table_dynamic = format_table + title_dynamic + string_columns + table_content_dynamic + end_table_dynamic
 
-        self.LatexTableStatic = final_table_static
-        self.LatexTableDynamic = final_table_dynamic
+        self.LatexTableStaticResults = final_table_static
+        self.LatexTableDynamicResults = final_table_dynamic
+
+    def CreateLatexTableDiscussion(self, list_scenario_performance):
+        format_table = r"\begin{table}[h!] " + "\n"\
+                       r"\centering " + "\n"\
+                       r"\begin{tabular*}" + "\n"\
+                       r"{\columnwidth}{@{\extracolsep{\fill}}l|l|l|l|l|l} \hline" + "\n"
+
+        title = "\\multicolumn{{6}}{{c}}{{Dynamic: {} - distance: {} m}}\\\\\\hline\\hline".format(self.scenario['Scenario'], self.scenario['Distance']) + "\n"
+
+        string_columns = r"&  & \multicolumn{2}{c|}{RMSE RPE increase wrt static} & \multirow{2}{*}{\makecell[ct]{Increase tracking " \
+                         r"\\ failure [\%]}} & \multirow{2}{*}{\makecell[ct]{Increase False \\Loop Closure [\%]}} \\" + "\n" + \
+                         r"Map & Nr & \multicolumn{1}{c}{Trans. [\%]} & \multicolumn{1}{c|}{Rot. [\%]} & & \\\hline"
+        table_content = ""
+
+        for i in range(len(list_scenario_performance)):
+            if i == 0:
+                town_column = r"\multirow{3}{4em}{Town01}"
+            elif i == 3:
+                town_column = r"\hline \multirow{3}{4em}{Town02}"
+            elif i == 6:
+                town_column = r"\hline \multirow{3}{4em}{Town03}"
+            else:
+                town_column = ""
+            location_data = list_scenario_performance[i]
+
+            if location_data.static_vs_dynamic_avg is None:
+                table_data_row = town_column + \
+                             "& {} & {} & {} & {} & {}".format(i, "(-)", "(-)",
+                                                             location_data.lost_track_dynamic - location_data.lost_track_static,
+                                                             location_data.false_loop_dynamic - location_data.false_loop_static) \
+                             + r"\\" + "\n"
+            else:
+                table_data_row = town_column + \
+                             "& {0:d} & {1:.2f} & {2:.2f} & {3:.1f} & {4:.1f}".format(i,
+                                                                                      location_data.static_vs_dynamic_avg[0],
+                                                                                      location_data.static_vs_dynamic_avg[1],
+                                                                                      location_data.lost_track_dynamic - location_data.lost_track_static,
+                                                                                      location_data.false_loop_dynamic - location_data.false_loop_static
+                                                                                      ) + r"\\" + "\n"
+            table_content += table_data_row
+
+        end_table = r"\end{tabular*} " + "\n"\
+                    r"\caption{Caption}" + "\n"\
+                    r"\label{tab:my_label}" + "\n"\
+                    r"\end{table}"
+        final_table = format_table + title + string_columns + table_content + end_table
+
+        self.LatexTableDiscussion = final_table
+
+
 
     def SummaryPerformance(self):
         """Prints a summary of the performance of the scenario and location"""
