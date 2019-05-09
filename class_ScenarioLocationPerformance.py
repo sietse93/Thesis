@@ -47,6 +47,7 @@ class ScenarioLocationPerformance:
 
         # Percentage increase error dynamic over static
         self.static_vs_dynamic_avg = ()
+        self.static_vs_dynamic_std = ()
 
         # save the crf data in lists
         for orb in slam_stat:
@@ -126,10 +127,24 @@ class ScenarioLocationPerformance:
     def CompareAvgStaticVsDynamic(self):
         if self.rmse_dynamic_avg == None or self.rmse_static_avg == None:
             self.static_vs_dynamic_avg = None
+            self.static_vs_dynamic_std = None
         else:
-            stat_vs_dyn_trans = (self.rmse_dynamic_avg[0] - self.rmse_static_avg[0] )/self.rmse_static_avg[0]*100.0
-            stat_vs_dyn_rot = (self.rmse_dynamic_avg[1] - self.rmse_static_avg[1])/self.rmse_static_avg[1]*100.0
-            self.static_vs_dynamic_avg = (stat_vs_dyn_trans, stat_vs_dyn_rot)
+            stat_vs_dyn_trans = []
+            stat_vs_dyn_rot = []
+            for RmseStatic in self.rmse_static:
+                for RmseDynamic in self.rmse_dynamic:
+                    stat_vs_dyn_trans.append((RmseDynamic[0] - RmseStatic[0])/RmseStatic[0]*100.0)
+                    stat_vs_dyn_rot.append((RmseDynamic[1] - RmseStatic[1])/RmseStatic[1]*100.0)
+            stat_vs_dyn_trans_mean = np.mean(np.array(stat_vs_dyn_trans))
+            stat_vs_dyn_trans_std = np.std(np.array(stat_vs_dyn_trans))
+            stat_vs_dyn_rot_mean = np.mean(np.array(stat_vs_dyn_rot))
+            stat_vs_dyn_rot_std = np.std(np.array(stat_vs_dyn_rot))
+            self.static_vs_dynamic_avg = (stat_vs_dyn_trans_mean, stat_vs_dyn_rot_mean)
+            self.static_vs_dynamic_std = (stat_vs_dyn_trans_std, stat_vs_dyn_rot_std)
+            # pdb.set_trace()
+            # stat_vs_dyn_trans = (self.rmse_dynamic_avg[0] - self.rmse_static_avg[0])/self.rmse_static_avg[0]*100.0
+            # stat_vs_dyn_rot = (self.rmse_dynamic_avg[1] - self.rmse_static_avg[1])/self.rmse_static_avg[1]*100.0
+            # self.static_vs_dynamic_avg = (stat_vs_dyn_trans, stat_vs_dyn_rot)
 
     def CalculateAverageRMSE(self):
         """Calculate the average and variance of starting location"""

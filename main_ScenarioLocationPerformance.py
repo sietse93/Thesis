@@ -180,13 +180,17 @@ class ScenarioPerformance:
         format_table = r"\begin{table}[h!] " + "\n"\
                        r"\centering " + "\n"\
                        r"\begin{tabular*}" + "\n"\
-                       r"{\columnwidth}{@{\extracolsep{\fill}}l|l|l|l|l|l} \hline" + "\n"
+                       r"{\columnwidth}{@{\extracolsep{\fill}}l|l|l|l|l|l|l|l} \hline" + "\n"
 
-        title = "\\multicolumn{{6}}{{c}}{{Dynamic: {} - distance: {} m}}\\\\\\hline\\hline".format(self.scenario['Scenario'], self.scenario['Distance']) + "\n"
+        title = "\\multicolumn{{8}}{{c}}{{Dynamic: {} - distance: {} m}}\\\\\\hline\\hline".format(self.scenario['Scenario'], self.scenario['Distance']) + "\n"
 
-        string_columns = r"&  & \multicolumn{2}{c|}{RMSE RPE increase wrt static} & \multirow{2}{*}{\makecell[ct]{Increase tracking " \
-                         r"\\ failure [\%]}} & \multirow{2}{*}{\makecell[ct]{Increase False \\Loop Closure [\%]}} \\" + "\n" + \
-                         r"Map & Nr & \multicolumn{1}{c}{Trans. [\%]} & \multicolumn{1}{c|}{Rot. [\%]} & & \\\hline"
+        string_columns = r"&  & \multicolumn{4}{c|}{RMSE RPE increase wrt static} & " \
+                         r"\multirow{3}{*}{\makecell[ct]{Increase tracking \\ " \
+                         r"failure [\%]}} & \multirow{3}{*}{\makecell[ct]{Increase false " \
+                         r"\\loop closure [\%]}} \\ &  & \multicolumn{2}{c}{Trans. [\%]} & " \
+                         r"\multicolumn{2}{c|}{Rot. [\%]} & & \\Map & Nr & \multicolumn{1}{c}{Average} " \
+                         r"& \multicolumn{1}{c}{Std}& \multicolumn{1}{c}{Average} & " \
+                         r"\multicolumn{1}{c|}{Std} & & \\ \hline"
         table_content = ""
 
         for i in range(len(list_scenario_performance)):
@@ -202,18 +206,19 @@ class ScenarioPerformance:
 
             if location_data.static_vs_dynamic_avg is None:
                 table_data_row = town_column + \
-                             "& {} & {} & {} & {} & {}".format(i, "(-)", "(-)",
+                             "& {} & {} & {} & {} & {} & {} & {}".format(i, "(-)", "(-)", "(-)", "(-)",
                                                              location_data.lost_track_dynamic - location_data.lost_track_static,
                                                              location_data.false_loop_dynamic - location_data.false_loop_static) \
                              + r"\\" + "\n"
             else:
                 table_data_row = town_column + \
-                             "& {0:d} & {1:.2f} & {2:.2f} & {3:.1f} & {4:.1f}".format(i,
-                                                                                      location_data.static_vs_dynamic_avg[0],
-                                                                                      location_data.static_vs_dynamic_avg[1],
-                                                                                      location_data.lost_track_dynamic - location_data.lost_track_static,
-                                                                                      location_data.false_loop_dynamic - location_data.false_loop_static
-                                                                                      ) + r"\\" + "\n"
+                             "& {0:d} & {1:.2f} & {2:.2f} & {3:.2f} & {4:.2f} & {5:.1f} & {6:.1f}".format(i, location_data.static_vs_dynamic_avg[0],
+                                                                                                          location_data.static_vs_dynamic_std[0],
+                                                                                                          location_data.static_vs_dynamic_avg[1],
+                                                                                                          location_data.static_vs_dynamic_std[1],
+                                                                                                          location_data.lost_track_dynamic - location_data.lost_track_static,
+                                                                                                          location_data.false_loop_dynamic - location_data.false_loop_static
+                                                                                                          ) + r"\\" + "\n"
             table_content += table_data_row
 
         end_table = r"\end{tabular*} " + "\n"\
