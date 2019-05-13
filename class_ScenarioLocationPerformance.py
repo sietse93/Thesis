@@ -41,9 +41,9 @@ class ScenarioLocationPerformance:
 
         # average and variance root mean square error translational and rotational component, static and dynamic
         self.rmse_static_avg = ()
-        self.rmse_static_var = ()
+        self.rmse_static_std = ()
         self.rmse_dynamic_avg = ()
-        self.rmse_dynamic_var = ()
+        self.rmse_dynamic_std = ()
 
         # Percentage increase error dynamic over static
         self.static_vs_dynamic_avg = ()
@@ -133,8 +133,8 @@ class ScenarioLocationPerformance:
             stat_vs_dyn_rot = []
             for RmseStatic in self.rmse_static:
                 for RmseDynamic in self.rmse_dynamic:
-                    stat_vs_dyn_trans.append((RmseDynamic[0] - RmseStatic[0])/RmseStatic[0]*100.0)
-                    stat_vs_dyn_rot.append((RmseDynamic[1] - RmseStatic[1])/RmseStatic[1]*100.0)
+                    stat_vs_dyn_trans.append((RmseDynamic[0] - RmseStatic[0])/RmseStatic[0])
+                    stat_vs_dyn_rot.append((RmseDynamic[1] - RmseStatic[1])/RmseStatic[1])
             stat_vs_dyn_trans_mean = np.mean(np.array(stat_vs_dyn_trans))
             stat_vs_dyn_trans_std = np.std(np.array(stat_vs_dyn_trans))
             stat_vs_dyn_rot_mean = np.mean(np.array(stat_vs_dyn_rot))
@@ -151,21 +151,21 @@ class ScenarioLocationPerformance:
 
         if self.ratio_filtered_static == 1.0:
             self.rmse_static_avg = None
-            self.rmse_static_var = None
+            self.rmse_static_std = None
         else:
             rmse_trans_static = np.array([rmse[0] for rmse in self.rmse_static])
             rmse_rot_static = np.array([rmse[1] for rmse in self.rmse_static])
             self.rmse_static_avg = (np.mean(rmse_trans_static), np.mean(rmse_rot_static))
-            self.rmse_static_var = (np.var(rmse_trans_static), np.var(rmse_rot_static))
+            self.rmse_static_std = (np.std(rmse_trans_static), np.std(rmse_rot_static))
 
         if self.ratio_filtered_dynamic == 1.0:
             self.rmse_dynamic_avg = None
-            self.rmse_dynamic_var = None
+            self.rmse_dynamic_std = None
         else:
             rmse_trans_dynamic = np.array([rmse[0] for rmse in self.rmse_dynamic])
             rmse_rot_dynamic = np.array([rmse[1] for rmse in self.rmse_dynamic])
             self.rmse_dynamic_avg = (np.mean(rmse_trans_dynamic), np.mean(rmse_rot_dynamic))
-            self.rmse_dynamic_var = (np.var(rmse_trans_dynamic), np.var(rmse_rot_dynamic))
+            self.rmse_dynamic_std = (np.std(rmse_trans_dynamic), np.std(rmse_rot_dynamic))
 
 
     def SaveRpeData(self, gt):
