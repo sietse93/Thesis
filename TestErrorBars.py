@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import pdb
 
+
 def main():
     """Test if error bars show the results instinctively"""
     base_dir = "/home/sietse/results_carla0.9/stuckbehindvan/20fps/"
@@ -11,7 +12,7 @@ def main():
     Towns = (1,2)
 
     # for Town in Towns:
-    Town = 3
+    Town = 1
     if Town == 1:
         starting_locations = (0, 27, 58)
     elif Town == 2:
@@ -22,9 +23,15 @@ def main():
         print("Town does not exist")
         return
 
-    plt.figure("lala")
-    for SL in starting_locations:
-        x = []
+    plt.figure("RMSE RPE trans")
+    plt.title("RMSE Relative Pose Error translational component")
+    # total number of entries
+    N = (len(dynamic_scenarios)+1) * len(starting_locations)
+    i = 0
+    ind = np.arange(N)
+    x = []
+
+    for index, SL in enumerate(starting_locations):
         y_mean = []
         y_std = []
         track_fail = []
@@ -39,30 +46,42 @@ def main():
             # orb_static, orb_dynamic = FilterOutliersFromOrb(orb_static, orb_dynamic, Town, SL, ds)
             Perf = ScenarioLocationPerformance(ds, Town, SL, orb_static, orb_dynamic, gt)
             if ds == 20:
-                x.extend([str(Perf.location["Location"]) + "," + "static",
-                          str(Perf.location["Location"]) + "," + str(Perf.scenario["Distance"])])
+                x.extend(["T" + str(Perf.location["Town"]) + "Nr" + str(index+1) + " Static",
+                          "T" + str(Perf.location["Town"]) + "Nr" + str(index+1) + " Dist:" + str(Perf.scenario["Distance"])])
                 y_mean.extend([Perf.rmse_static_avg[0], Perf.rmse_dynamic_avg[0]])
                 y_std.extend([Perf.rmse_static_std[0], Perf.rmse_dynamic_std[0]])
                 track_fail.extend([Perf.lost_track_static, Perf.lost_track_dynamic])
                 loop_fail.extend([Perf.false_loop_static, Perf.false_loop_dynamic])
 
             else:
-                x.append(str(Perf.location["Location"]) + "," + str(Perf.scenario["Distance"]))
+                x.append("T" + str(Perf.location["Town"]) + "Nr" + str(index+1) + " Dist:" + str(Perf.scenario["Distance"]))
                 y_mean.append(Perf.rmse_dynamic_avg[0])
                 y_std.append(Perf.rmse_dynamic_std[0])
                 track_fail.append(Perf.lost_track_dynamic)
                 loop_fail.append(Perf.false_loop_dynamic)
-
+        # have to loop it otherwise you get the same color
         plt.subplot(2, 1, 1)
         # plt.grid(True)
-        plt.errorbar(np.array(x), np.array(y_mean), np.array(y_std), label=Perf.location)
+        label_location = "T" + str(Perf.location["Town"]) + "Nr" + str(index+1)
+        plt.errorbar(ind[i:i+(len(dynamic_scenarios)+1)], np.array(y_mean), np.array(y_std), label=label_location)
         plt.legend()
         width = 0.35
-        plt.subplot(2, 1, 2)
-        plot_track = plt.bar(np.array(x), track_fail, width, color="r")
-        plot_loop = plt.bar(np.array(x), loop_fail, width, bottom=plot_track, color="b")
 
-    plt.legend((plot_track, plot_loop), ("tracking failure", "loop failure"))
+        plt.subplot(2, 1, 2)
+        plot_track = plt.bar(ind[i:i+(len(dynamic_scenarios)+1)], track_fail, width, color="r")
+        plot_loop = plt.bar(ind[i:i+(len(dynamic_scenarios)+1)], loop_fail, width, bottom=track_fail, color="b")
+        i = i + (len(dynamic_scenarios)+1)
+    plt.subplot(2, 1, 1)
+    plt.xticks(ind, x)
+    plt.xlim(right=N)
+    plt.title("Root Mean Square Error Relative Pose Error translational component")
+
+    plt.subplot(2, 1, 2)
+    plt.title("Ratio removed due to false loop closure or tracking failure")
+    plt.xticks(ind,x)
+    plt.ylim(top=1.1)
+    plt.xlim(right=N)
+    plt.legend((plot_track, plot_loop), ("tracking failure", "false loop closure"))
     plt.show()
 
 
