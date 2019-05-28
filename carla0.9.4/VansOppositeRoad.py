@@ -28,7 +28,7 @@ sys.path.append('/home/sietse/carla/PythonAPI')
 
 
 def main():
-    SL = 75
+    SL = 78
     fps = 20.0
     speed = 15.0
     total_distance = 500
@@ -89,7 +89,7 @@ def main():
             total_dist += math.sqrt(dtrav.x**2 + dtrav.y**2 + dtrav.z**2)
             hero_route.append(next_waypoint)
 
-        # now define the route on the opposite lane, based on hero's route
+        ## Now define the route on the opposite lane, based on hero's route
         opposite_route = []
 
         # get all waypoints from the map
@@ -152,42 +152,54 @@ def main():
             # go down the list until both the hero as the opposite van are on the intersection
             while start_intersection_index != start_intersection_index_og:
                 list_opposite_next_waypoint = opposite_route[start_intersection_index].next(x_step)
-                if len(list_opposite_next_waypoint) > 1:
-                    eq_hero_waypoint = hero_route[start_intersection_index]
-                    eq_hero_waypoint_road_id = eq_hero_waypoint.road_id
-                    diff_road_id_min = float('Inf')
-
-                    for waypoint_index, waypoint in list_opposite_next_waypoint:
-                        waypoint_road_id = waypoint.road_id
-                        diff_road_id = abs(waypoint_road_id - eq_hero_waypoint_road_id)
-                        if diff_road_id < diff_road_id_min:
-                            chosen_index = waypoint_index
-                            diff_road_id_min = diff_road_id
-                else:
-                    chosen_index = 0
-
-                opposite_next_waypoint = list_opposite_next_waypoint[chosen_index]
+                opposite_next_waypoint = choose_correct_waypoint(list_opposite_next_waypoint, hero_route,
+                                                                 start_intersection_index)
                 start_intersection_index -= 1
                 opposite_route[start_intersection_index] = opposite_next_waypoint
 
             # Now we are at the point where the hero waypoint is off the intersection and we go back on the intersection
             # for both hero and opposite car. These indices are stored in the indices_intersection list
             opposite_intersection_index = start_intersection_index_og
-            opposite_next_waypoint = opposite_route[opposite_intersection_index].next(x_step)[0]
+            opposite_next_waypoint_list = opposite_route[opposite_intersection_index].next(x_step)
             opposite_intersection_index -= 1
+            opposite_next_waypoint = choose_correct_waypoint(opposite_next_waypoint_list, hero_route,
+                                                             opposite_intersection_index)
             while opposite_intersection_index in indices_intersection:
                 opposite_route[opposite_intersection_index] = opposite_next_waypoint
                 opposite_intersection_index -= 1
-                opposite_next_waypoint = opposite_next_waypoint.next(x_step)[0]
+                opposite_next_waypoint_list = opposite_next_waypoint.next(x_step)
+                opposite_next_waypoint = choose_correct_waypoint(opposite_next_waypoint_list, hero_route,
+                                                                 opposite_intersection_index)
 
+        # now reverse the route so the vans starts at the other side of the route
+        opposite_route.reverse()
+
+        # spawn the hero
         hero = world.spawn_actor(prius_bp, hero_spawn)
         actor_list.append(hero)
         hero.set_simulate_physics(False)
-        van_transform = opposite_route[0].transform
-        van_transform.location.z += 2.0
-        van = world.spawn_actor(van_bp, van_transform)
-        actor_list.append(van)
-        van.set_simulate_physics(False)
+
+        # spawn the vans in a dict construct
+        # NOTE:NOT ACTUALLY THE NUMBER OF VEHICLES
+        nr_vans = 8
+        van_dict = {}
+        van_index = 0
+        spawn_points = range(0, len(opposite_route), len(opposite_route)/(nr_vans-1))
+        for i in spawn_points:
+            van_transform = opposite_route[i].transform
+            van_transform.location.z += 2.0
+            van_key = "van{}".format(van_index)
+            van_route_index = "van{}_index".format(van_index)
+            van_dict[van_key] = world.spawn_actor(van_bp, van_transform)
+            van_dict[van_key].set_simulate_physics(False)
+            van_dict[van_route_index] = i
+            van_index += 1
+
+        # van_transform = opposite_route[0].transform
+        # van_transform.location.z += 2.0
+        # van = world.spawn_actor(van_bp, van_transform)
+        # actor_list.append(van)
+        # van.set_simulate_physics(False)
 
         clock = pygame.time.Clock()
 
@@ -198,12 +210,24 @@ def main():
             clock.tick(fps)
             world.tick()
             world.wait_for_tick()
-            print(hero_route_index+1)
+            # next transform for hero
             next_trans = hero_route[hero_route_index+1].transform
             batch = [carla.command.ApplyTransform(hero.id, next_trans)]
 
-            next_trans_van = opposite_route[hero_route_index+1].transform
-            batch += [carla.command.ApplyTransform(van.id, next_trans_van)]
+            for i in range(len(spawn_points)):
+                cur_index = van_dict["van{}_index".format(i)]
+                next_index = cur_index + 1
+                van = van_dict["van{}".format(i)]
+                if next_index > len(opposite_route)-1:
+                    # if the van is at the end of its route, set the vehicle at the beginning of the route
+                    van_dict["van{}_index".format(i)] = 0
+                    next_trans_van = opposite_route[0].transform
+                    batch += [carla.command.ApplyTransform(van.id, next_trans_van)]
+                else:
+                    next_trans_van = opposite_route[next_index].transform
+                    van_dict["van{}_index".format(i)] = next_index
+                    batch += [carla.command.ApplyTransform(van.id, next_trans_van)]
+
             hero_route_index += 1
 
             client.apply_batch(batch)
@@ -218,6 +242,27 @@ def main():
         for actor in actor_list:
             actor.destroy()
         print("Actors destroyed")
+
+
+def choose_correct_waypoint(waypoint_list, hero_route, current_index):
+    if waypoint_list > 1:
+        eq_hero_waypoint = hero_route[current_index]
+        eq_hero_road_id = eq_hero_waypoint.road_id
+        diff_road_id_min = float('Inf')
+
+        for waypoint_index, waypoint in enumerate(waypoint_list):
+            waypoint_road_id = waypoint.road_id
+            diff_road_id = abs(waypoint_road_id - eq_hero_road_id)
+            if diff_road_id < diff_road_id_min:
+                chosen_index = waypoint_index
+                diff_road_id_min = diff_road_id
+
+    else:
+        chosen_index = 0
+
+    chosen_waypoint = waypoint_list[chosen_index]
+
+    return chosen_waypoint
 
 
 if __name__ == '__main__':
