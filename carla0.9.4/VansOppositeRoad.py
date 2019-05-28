@@ -26,8 +26,9 @@ import time
 import pdb
 sys.path.append('/home/sietse/carla/PythonAPI')
 
+
 def main():
-    SL = 0
+    SL = 75
     fps = 20.0
     speed = 15.0
     total_distance = 500
@@ -148,9 +149,24 @@ def main():
             while opposite_route[start_intersection_index].is_intersection is True:
                 start_intersection_index = start_intersection_index_og + 1
             # now start_intersection_index contains the first waypoint that is not an intersection on the opposite road.
+            # go down the list until both the hero as the opposite van are on the intersection
             while start_intersection_index != start_intersection_index_og:
-                # TO DO: THE CHOICE OF THE WAYPOINTS IN THE LIST SHOULD ENSURE THAT THE CORRECT TURN IS MADE
-                opposite_next_waypoint = opposite_route[start_intersection_index].next(x_step)[0]
+                list_opposite_next_waypoint = opposite_route[start_intersection_index].next(x_step)
+                if len(list_opposite_next_waypoint) > 1:
+                    eq_hero_waypoint = hero_route[start_intersection_index]
+                    eq_hero_waypoint_road_id = eq_hero_waypoint.road_id
+                    diff_road_id_min = float('Inf')
+
+                    for waypoint_index, waypoint in list_opposite_next_waypoint:
+                        waypoint_road_id = waypoint.road_id
+                        diff_road_id = abs(waypoint_road_id - eq_hero_waypoint_road_id)
+                        if diff_road_id < diff_road_id_min:
+                            chosen_index = waypoint_index
+                            diff_road_id_min = diff_road_id
+                else:
+                    chosen_index = 0
+
+                opposite_next_waypoint = list_opposite_next_waypoint[chosen_index]
                 start_intersection_index -= 1
                 opposite_route[start_intersection_index] = opposite_next_waypoint
 
@@ -160,21 +176,9 @@ def main():
             opposite_next_waypoint = opposite_route[opposite_intersection_index].next(x_step)[0]
             opposite_intersection_index -= 1
             while opposite_intersection_index in indices_intersection:
-                print("while opposite_intersection_index in indices_intersection:")
                 opposite_route[opposite_intersection_index] = opposite_next_waypoint
                 opposite_intersection_index -= 1
                 opposite_next_waypoint = opposite_next_waypoint.next(x_step)[0]
-
-
-
-
-
-
-
-
-        pdb.set_trace()
-
-
 
         hero = world.spawn_actor(prius_bp, hero_spawn)
         actor_list.append(hero)
