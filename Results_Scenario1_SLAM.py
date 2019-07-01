@@ -104,7 +104,7 @@ fs_y = 14
 fs_title = 16
 x_lim_right = len(x)-0.5
 
-plt.figure("Performance Algorithm")
+plt.figure("Performance SLAM Algorithm")
 ind = np.arange(len(x))
 plt.subplot(3, 1, 1)
 plt.plot(ind, np.array(avg_trans), color='green')
