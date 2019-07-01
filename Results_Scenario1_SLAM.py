@@ -105,15 +105,23 @@ fs_title = 16
 x_lim_right = len(x)-0.5
 
 plt.figure("Performance SLAM Algorithm")
+plt.suptitle("Results Town {}: ORB in SLAM mode".format(Town), fontsize=18, fontweight='bold', y=0.95)
 ind = np.arange(len(x))
 plt.subplot(3, 1, 1)
-plt.plot(ind, np.array(avg_trans), color='green')
-plt.fill_between(ind, np.array(avg_trans_low), np.array(avg_trans_upp), color='green', alpha=0.5)
+plt.plot(ind, np.array(avg_trans), color='green', label="Average RMSE Value")
+plt.fill_between(ind, np.array(avg_trans_low), np.array(avg_trans_upp), color='green', alpha=0.5, label="95% confidence interval")
+
 
 # plot the raw filtered average rmse data
 for i in ind:
     x_values = [i]*len(scatter_trans[i])
-    plt.scatter(np.array(x_values), np.array(scatter_trans[i]), color='green', marker='x')
+    if i == ind[-1]:
+        plt.scatter(np.array(x_values), np.array(scatter_trans[i]), color='green', marker='x', label="Raw RMSE values")
+    else:
+        plt.scatter(np.array(x_values), np.array(scatter_trans[i]), color='green', marker='x')
+
+
+plt.legend()
 
 # plot the vertical lines
 scenario_block = len(dynamic_scenarios)+1.0
@@ -139,7 +147,7 @@ scenario_block = len(dynamic_scenarios)+1.0
 for i in range(1, len(starting_locations)):
     plt.axvline(x=scenario_block*i-0.5, color='black', alpha=0.5)
 plt.grid(True, linestyle='--', alpha=0.5)
-plt.title("Rotational component root mean square error relative pose error", fontsize=fs_title, fontweight='bold')
+plt.title("Rotational component root mean square error of the relative pose error", fontsize=fs_title, fontweight='bold')
 plt.ylabel("Rot. RMSE RPE [deg/m]", fontsize=fs_y)
 plt.xticks(ind, x, fontsize=fs_x)
 plt.xlim(right=x_lim_right)
@@ -157,7 +165,7 @@ scenario_block = len(dynamic_scenarios)+1.0
 for i in range(1, len(starting_locations)):
     plt.axvline(x=scenario_block*i-0.5, color='black', alpha=0.5)
 plt.xticks(ind, x, fontsize=fs_x)
-plt.ylabel("Data used and filtered out [%]", fontsize=fs_y)
+plt.ylabel("Data used and filtered [%]", fontsize=fs_y)
 plt.title("Division successful and failed localization", fontsize=fs_title, fontweight='bold')
 plt.grid(True, linestyle='--', alpha=0.5)
 plt.legend((plot_track, plot_loop, plot_complete), ("tracking failure", "false relocalization", "successful tracking"), loc='upper right')
