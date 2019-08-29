@@ -1,83 +1,24 @@
-from CarlaSlamPerformanceV2 import CarlaSlamEvaluate
-from consistency_control import gt_consistency
-from matplotlib import pyplot as plt
+from class_ConvertRefFrame import ConvertRefFrame
 from evaluate_pose import *
-from evaluate_RPE_time import evaluate_RPE_time
-from evaluate_RPE_dist import evaluate_RPE_dist
-import pickle
-import pdb
+from matplotlib import pyplot as plt
 
-# import the ground truth first
-gt_file_static = "/home/sietse/results_carla0.9/T3_SL97_s/T3_SL97_s_gt.txt"
-gt_file_dynamic = "/home/sietse/results_carla0.9/T3_SL97_d1/T3_SL97_d1_gt.txt"
+Town = 1
+SL = 0
+ds = 20
+base_dir = "/home/sietse/results_carla0.9/stuckbehindvan/20fps/"
 
-with CarlaSlamEvaluate("gt", gt_file_static, 'k-') as gt_static:
-    gt_static.process_data()
+scenario = "static"
 
-with CarlaSlamEvaluate("gt", gt_file_dynamic, 'k--') as gt_dynamic:
-    gt_dynamic.process_data()
+file_name = "T{}_SL{}_{}_gt.txt".format(Town, SL, scenario[0])
+dir_name = "T{}_SL{}_{}/".format(Town, SL, scenario[0])
+file_loc = base_dir + dir_name + file_name
 
-# import the orb pose estimations
-file_string_static = "/home/sietse/results_carla0.9/T3_SL97_s/T3_SL97_s_orb_{}.txt"
-file_string_dynamic = "/home/sietse/results_carla0.9/T3_SL97_d1/T3_SL97_d1_orb_{}.txt"
+with ConvertRefFrame("gt", file_loc, "k-") as gt:
+    gt.process_data()
 
-# list with all CarlaSlamEvaluate Classes
-orb_static_objects = []
-orb_dynamic_objects = []
-# orb all will have 5x static data and 5x dynamic data
-orb_all = []
-gt_list = []
-
-#  read all orb data
-for i in range(5):
-    static_plot = "C{}-".format(i)
-
-    with CarlaSlamEvaluate("orb", file_string_static.format(i), static_plot) as orb_static:
-        orb_static.process_data()
-    orb_static_objects.append(orb_static)
-    orb_all.append(orb_static)
-    gt_list.append(gt_static)
-
-for i in range(5):
-    dynamic_plot = "C{}--".format(i)
-
-    with CarlaSlamEvaluate("orb", file_string_dynamic.format(i), dynamic_plot) as orb_dynamic:
-        orb_dynamic.process_data()
-    orb_dynamic_objects.append(orb_dynamic)
-    orb_all.append(orb_dynamic)
-    gt_list.append(gt_dynamic)
-
-methods = [method for method in orb_all]
-methods.append(gt_static)
+methods = [gt]
 evaluate_trajectory(methods)
 compare_position(methods)
 compare_euler_angles(methods)
 
-difference_pose(gt_list, orb_all)
-evaluate_RPE_time(gt_list, orb_all, 1.0)
-evaluate_RPE_dist(gt_list, orb_all, eva_dist=100)
-
 plt.show()
-
-
-
-
-# with CarlaSlamEvaluate("orb", orb_file_static, 'b-') as orb_static:
-#     orb_static.process_data()
-#
-# with CarlaSlamEvaluate("orb", orb_file_dynamic, 'r--') as orb_dynamic:
-#     orb_dynamic.process_data()
-#
-# gt_consistency(gt_dynamic, gt_static)
-#
-# evaluate_trajectory([gt_static])
-# compare_position([gt_static])
-#
-# GT = [gt_static, gt_dynamic]
-# SLAM = [orb_static, orb_dynamic]
-# time_RPE = 1.0
-#
-# evaluate_RPE_time(GT, SLAM, time_RPE)
-# evaluate_RPE_dist(GT, SLAM, eva_dist=100)
-#
-# plt.show()

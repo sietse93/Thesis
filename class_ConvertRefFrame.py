@@ -158,7 +158,7 @@ class ConvertRefFrame(object):
                 # rotation order: static axis, roll, pitch, yaw
                 # could be that there are change in sign in these quaternions
                 # quaternion = tf.transformations.quaternion_from_euler(math.radians(roll), math.radians(pitch), math.radians(yaw), axes='sxyz')
-		quaternion = transformations.quaternion_from_euler(math.radians(roll), math.radians(pitch), math.radians(yaw), axes='sxyz')
+                quaternion = transformations.quaternion_from_euler(math.radians(roll), math.radians(pitch), math.radians(yaw), axes='sxyz')
                 self.quaternions.append(quaternion)
 
                 # Convert quaternion to homogeneous coordinates
@@ -171,7 +171,7 @@ class ConvertRefFrame(object):
 
                 # lets try to get the rotation matrix from the Euler angles
                 # q = tf.transformations.euler_matrix(math.radians(roll), math.radians(pitch), math.radians(yaw), axes='sxyz')
-		q = transformations.euler_matrix(math.radians(roll), math.radians(pitch), math.radians(yaw), axes='sxyz')
+                q = transformations.euler_matrix(math.radians(roll), math.radians(pitch), math.radians(yaw), axes='sxyz')
                 q[0][3] = x
                 q[1][3] = y
                 q[2][3] = z
@@ -236,7 +236,7 @@ class ConvertRefFrame(object):
                 quaternion = [q1_new, q2_new, q3_new, q4_new]
                 self.quaternions.append(quaternion)
                 # q = tf.transformations.quaternion_matrix(quaternion)
-		q = transformations.quaternion_matrix(quaternion)
+                q = transformations.quaternion_matrix(quaternion)
                 q[0][3] = x_new
                 q[1][3] = y_new
                 q[2][3] = z_new
@@ -245,7 +245,7 @@ class ConvertRefFrame(object):
                 # Note that euler_from_quaternion, is quaternion_matrix function and then euler_from_matrix function
                 # Also, positive rotations seem to be defined as CW instead of CCW.
                 # roll, pitch, yaw_180 = tf.transformations.euler_from_quaternion(quaternion, axes='sxyz')
-		roll, pitch, yaw_180 = transformations.euler_from_quaternion(quaternion, axes='sxyz')
+                roll, pitch, yaw_180 = transformations.euler_from_quaternion(quaternion, axes='sxyz')
 
                 # roll and pitch are exactly reversed. If results are weird, this could be the mistake
                 roll_list.append(np.degrees(-roll))

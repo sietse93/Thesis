@@ -11,7 +11,7 @@ from scenario_labelling import ScenarioProcessor
 ## convert all orb data and gt data
 
 # file locations
-file_string_static = "/home/sietse/official_experiment_data/bp_SL_20_NV_0_SV_1_orb_{}.txt"
+file_string_static = "/home/sietse/official_experiment_data/SL_20_NV_0_SV_1_orb_{}.txt"
 file_string_dynamic = "/home/sietse/official_experiment_data/SL_20_NV_40_SV_1_orb_{}.txt"
 file_gt_dyn = "/home/sietse/official_experiment_data/SL_20_NV_40_SV_1_gt.txt"
 file_gt_stat = "/home/sietse/official_experiment_data/SL_20_NV_0_SV_1_gt.txt"
@@ -85,6 +85,7 @@ print("encountered vehicles processed")
 
 # compare their poses over time
 methods = [AverageStatic, AverageDynamic]
+evaluate_trajectory(methods)
 compare_position(methods)
 compare_euler_angles(methods)
 # compare_quaternions(methods)
@@ -94,6 +95,6 @@ SLAM = [AverageStatic, AverageDynamic]
 time_RPE = 1.0
 evaluate_RPE_time_da(GT, SLAM, time_RPE, encountered_vehicles)
 # evaluate_RPE_time(GT, SLAM, time_RPE)
-# # # evaluate_RPE_dist(GT, SLAM, eva_dist=50)
+evaluate_RPE_dist(GT, SLAM, eva_dist=100)
 #
 plt.show()

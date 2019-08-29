@@ -1,0 +1,6 @@
+#!/bin/bash
+
+gnome-terminal -e "/home/sietse/carla/CarlaUE4.sh Town03" 
+sleep 60 
+python /home/sietse/carla/PythonAPI/StuckBehindVanAutomatic.py
+kill -INT $(pgrep CarlaUE4)

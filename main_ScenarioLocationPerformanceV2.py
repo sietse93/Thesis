@@ -4,12 +4,12 @@ from uncertainties import ufloat
 import pdb
 import time
 
-def main():
+def main_stuckbehindvan():
     """Describes the error increase wrt static for each dynamic scenario """
-    Towns = (1, 2, 3)
-    dynamic_scenarios = (20, 15)
-    # base_dir = "/home/sietse/results_carla0.9/stuckbehindvan/20fps/"
-    base_dir = "/media/svanschouwenburg/Elements/stuckbehindvan/20fps/"
+    Towns = (1, 2)
+    dynamic_scenarios = (20, 15, 10)
+    base_dir = "/home/sietse/results_carla0.9/stuckbehindvan/20fps/"
+    # base_dir = "/media/svanschouwenburg/Elements/stuckbehindvan/20fps/"
 
     scenario_performance_data = []
     for Town in Towns:
@@ -28,13 +28,18 @@ def main():
                 dir_name_stat = DirName(Town, SL, "static")
                 dir_name_dyn = DirName(Town, SL, "dynamic", ds)
 
-                orb_static, gt = InspectJsonFileInDir(Town, SL, base_dir, dir_name_stat)
-                orb_dynamic, gt = InspectJsonFileInDir(Town, SL, base_dir, dir_name_dyn)
-               	
+                orb_static, gt = InspectJsonFileInDir(Town, SL, base_dir, dir_name_stat, "VO")
+                orb_dynamic, gt = InspectJsonFileInDir(Town, SL, base_dir, dir_name_dyn, "VO")
                 print("Converting T{}SL{}".format(Town, SL))
                 Test = ScenarioLocationPerformance(ds, Town, SL, orb_static, orb_dynamic, gt)
                 scenario_performance_data.append(Test)
     A = ScenarioPerformance(scenario_performance_data)
+
+def main_vansoppositeroad():
+    Towns = (1, 2)
+    dynamic_variable = 10
+    base_dir = "/home/sietse/results_carla0.9/VansOppositeRoad/"
+
 
 
 class ScenarioPerformance:

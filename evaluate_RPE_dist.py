@@ -85,7 +85,7 @@ def evaluate_RPE_dist(GT, SLAM, eva_dist=float):
                 RPE_z_i = RPE_i[2][3]
                 RPE_z.append(RPE_z_i)
                 trans_err = math.sqrt(RPE_x_i ** 2 + RPE_y_i ** 2 + RPE_z_i ** 2) / eva_dist
-                trans_errs.append(trans_err*100)  # trans_err is now a ratio, multiply by 100 for percentage
+                trans_errs.append(trans_err)  # ??trans_err is now a ratio, multiply by 100 for percentage
 
                 # Calculate magnitude of angle and normalize to distance
                 a = RPE_i[0][0]  # roll

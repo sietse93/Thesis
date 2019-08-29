@@ -8,17 +8,18 @@ import pdb
 # check on 1 starting location with 1 scenario, look at the poses, select inliers
 
 def main():
-    Town = 3
-    SL = 132
+    Town = 1
+    SL = 0
     ds = 10
 
     base_dir = "/home/sietse/results_carla0.9/stuckbehindvan/20fps/"
     dir_name_stat = DirName(Town, SL, "static")
     dir_name_dyn = DirName(Town, SL, "dynamic", ds)
 
+    mode = "SLAM"
     # inspect the data
-    orb_static, gt = InspectJsonFileInDir(Town, SL, base_dir, dir_name_stat)
-    orb_dynamic, gt = InspectJsonFileInDir(Town, SL, base_dir, dir_name_dyn)
+    orb_static, gt = InspectJsonFileInDir(Town, SL, base_dir, dir_name_stat, mode)
+    orb_dynamic, gt = InspectJsonFileInDir(Town, SL, base_dir, dir_name_dyn, mode)
     methods = []
     SLAM = []
     GT = []
@@ -30,17 +31,18 @@ def main():
         methods.append(orb)
         SLAM.append(orb)
         GT.append(gt)
-    # pdb.set_trace()
+    # orb_static, orb_dynamic = FilterOutliersFromOrb(orb_static, orb_dynamic, Town, SL, ds)
     methods.append(gt)
-
+    difference_pose(GT, SLAM)
     VisualizeData(methods)
 
     LocalPerformance = ScenarioLocationPerformance(ds, Town, SL, orb_static, orb_dynamic, gt)
 
     LocalPerformance.ShowRpeDistAll()
     LocalPerformance.ShowRpeDistFiltered()
-    LocalPerformance.SummaryPerformance()
+    # LocalPerformance.SummaryPerformance()
 
+    # pdb.set_trace()
     plt.show()
 
     # reject the outliers
@@ -61,10 +63,21 @@ def DirName(Town, SL, scenario, ds=20):
     return dir_name
 
 
-def InspectJsonFileInDir(Town, SL, base_dir, dir_name):
+def InspectJsonFileInDir(Town, SL, base_dir, dir_name, mode):
     """import all JSON files in directory and outputs a list of crf objects and a groundtruth"""
     dir = base_dir + dir_name
-    file_ext = "_orb_{}_json.txt"
+
+    if mode == "SLAM":
+        file_ext = "_orb_{}_json.txt"
+    elif mode == "VO":
+        file_ext = "_orb_vo_{}_json.txt"
+    elif mode == "MC":
+        file_ext = "_orb_mc_off_{}_json.txt"
+    elif mode == "NOVM":
+        file_ext = "_orb_NoVm_{}_json.txt"
+    else:
+        print("MODE DOES NOT EXIST")
+        return
 
     # get the orb data for a scenario
     orb_data = []
@@ -75,10 +88,14 @@ def InspectJsonFileInDir(Town, SL, base_dir, dir_name):
         orb_data.append(orb)
         methods.append(orb)
 
-    dir_name_stat = "T{}_SL{}_s/".format(Town, SL)
-    dir_gt = base_dir + dir_name_stat
-    file_name_gt = dir_name_stat[:-1]+"_gt_json.txt"
-    gt = json2crf(dir_gt, file_name_gt)
+    try:
+        dir_gt = base_dir + dir_name
+        file_name = dir_name[:-1] + "_gt_json.txt"
+        gt = json2crf(dir_gt, file_name)
+    except IOError:
+        dir_name_stat = "T{}_SL{}_s/".format(Town, SL)
+        file_name_gt = dir_name_stat[:-1]+"_gt_json.txt"
+        gt = json2crf(base_dir + dir_name_stat, file_name_gt)
 
     return orb_data, gt
 

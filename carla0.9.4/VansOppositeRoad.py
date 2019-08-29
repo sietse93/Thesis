@@ -18,9 +18,12 @@ try:
 except ImportError:
     raise RuntimeError('cannot import pygame, make sure pygame package is installed')
 
-# import numpy as np
+import numpy as np
 import math
-
+try:
+    import queue
+except ImportError:
+    import Queue as queue
 import random
 import time
 import pdb
@@ -28,21 +31,44 @@ sys.path.append('/home/sietse/carla/PythonAPI')
 
 
 def main():
-    Town = 1
-    SL = 58
+    Town = 2
+    starting_locations = [18, 37, 78]
     nr_vans = 10
     scenario = "dynamic"
-    run_simulation(Town, SL, scenario, nr_vans)
+    for SL in starting_locations:
+        start_time = time.time()
+        run_simulation(Town, SL, scenario, nr_vans)
+        end_time = time.time()
+        print("Sim time took: {}".format(end_time-start_time))
 
 def run_simulation(Town, SL, scenario, nr_vans):
     fps = 20.0
     speed = 15.0
     total_distance = 500
 
-
     v = speed / 3.6
     x_step = v * (1 / fps)
     image_length = 680
+
+    # Get systematic file extensions
+    # TownNumber_StartingLocation_(S)tatic(D)ynamic_nrvans
+    home_user = os.path.expanduser('~')
+    if scenario == "dynamic":
+        file_sys = "/T{}_SL{}_{}{}".format(Town, SL, scenario[0], nr_vans)
+        print("run dynamic simulation")
+    else:
+        print("run static simulation")
+        file_sys = "/T{}_SL{}_{}".format(Town, SL, scenario[0])
+
+    # A directory per scenario
+    dir = home_user + "/results_carla0.9/VansOppositeRoad" + file_sys
+
+    try:
+        os.mkdir(dir)
+    except OSError:
+        print("directory exists")
+
+    filename = dir + file_sys
 
     actor_list = []
 
@@ -61,6 +87,16 @@ def run_simulation(Town, SL, scenario, nr_vans):
     settings = world.get_settings()
     settings.synchronous_mode = True
     world.apply_settings(settings)
+
+    # logging groundtruth
+    gt_filename = filename + "_gt.txt"
+    if not os.path.exists(os.path.dirname(gt_filename)):
+        try:
+            os.makedirs(os.path.dirname(gt_filename))
+        except OSError as exc:  # guard against race conditions
+            if exc.errno != errno.EEXIST:
+                raise
+    gt_log = open(gt_filename, 'w')
 
     # set world settings
     try:
@@ -101,6 +137,25 @@ def run_simulation(Town, SL, scenario, nr_vans):
         hero = world.spawn_actor(prius_bp, hero_spawn)
         actor_list.append(hero)
         hero.set_simulate_physics(False)
+
+        # define stereo system
+        camera_bp = bp_lib.find('sensor.camera.rgb')
+        camera_bp.set_attribute('image_size_x', str(image_length))
+        camera_bp.set_attribute('image_size_y', str(image_length))
+        camera_bp.set_attribute('fov', '90')
+        # don't install a sensor tick, it fucks up sync mode.
+
+        camera_loc = carla.Transform(carla.Location(x=1.8, z=1.3))
+        camera_left = world.spawn_actor(camera_bp, camera_loc, attach_to=hero)
+        actor_list.append(camera_left)
+        image_left_queue = queue.Queue()
+        camera_left.listen(image_left_queue.put)
+
+        camera_loc_right = carla.Transform(carla.Location(x=1.8, y=0.54, z=1.3))
+        camera_right = world.spawn_actor(camera_bp, camera_loc_right, attach_to=hero)
+        actor_list.append(camera_right)
+        image_right_queue = queue.Queue()
+        camera_right.listen(image_right_queue.put)
 
         ## Now define the route on the opposite lane, based on hero's route
 
@@ -155,7 +210,7 @@ def run_simulation(Town, SL, scenario, nr_vans):
 
             # Opposite_route_start_intersection is an index that is a waypoint, but it is still an intersection.
             # This means the road id is wrong. You need the next waypoint
-            # this for loop is to ensure when multiple intersections occur
+            # this for loop is to ensure when multiple intersections occur in the trajectory
             print("COUNTERACT FOR INTERSECTIONS")
             for start_intersection_index_og in opposite_route_start_intersection_indices:
                 # first ensure that although the hero_waypoint is not an intersection anymore, the opposite route is also
@@ -188,6 +243,7 @@ def run_simulation(Town, SL, scenario, nr_vans):
 
             # now reverse the route so the vans starts at the other side of the route
             opposite_route.reverse()
+            print("ROUTE DEFINED")
 
             # spawn the vans in a dict construct
             # NOTE:NOT ACTUALLY THE NUMBER OF VEHICLES
@@ -205,15 +261,44 @@ def run_simulation(Town, SL, scenario, nr_vans):
                 van_dict[van_route_index] = i
                 van_index += 1
 
+        frame = None
+        start_frame = None
+        frame_skip_counter = 0
+
         clock = pygame.time.Clock()
 
         hero_route_index = 0
+
+        time = 0
 
         # actual simulation loop
         while hero_route_index < len(hero_route)-1:
             clock.tick(fps)
             world.tick()
-            world.wait_for_tick()
+            ts = world.wait_for_tick()
+
+            if frame is not None:
+                if ts.frame_count != frame + 1:
+                    frame_skip_counter = frame_skip_counter + 1
+                    print('frame skip nr: {}'.format(frame_skip_counter))
+
+            frame = ts.frame_count
+
+            while True:
+                image_left = image_left_queue.get()
+                image_right = image_right_queue.get()
+                if image_left.frame_number == ts.frame_count and image_right.frame_number == ts.frame_count:
+                    image_left.save_to_disk(dir + '/images/left/{}.png'.format(image_left.frame_number))
+                    image_right.save_to_disk(dir + '/images/right/{}.png'.format(image_right.frame_number))
+                    break
+                else:
+                    pdb.set_trace()
+
+            if start_frame is None:
+                start_frame = frame
+
+            time = time + 1 / fps
+
             # next transform for hero
             next_trans = hero_route[hero_route_index+1].transform
             batch = [carla.command.ApplyTransform(hero.id, next_trans)]
@@ -237,6 +322,14 @@ def run_simulation(Town, SL, scenario, nr_vans):
 
             client.apply_batch(batch)
 
+            # log ground truth
+            hero_loc = next_trans.location
+            hero_rot = next_trans.rotation
+
+            gt_line = "{} {} {} {} {} {} {}\n".format(time, hero_loc.x, hero_loc.y, hero_loc.z,
+                                                      hero_rot.roll, hero_rot.pitch, hero_rot.yaw)
+            gt_log.write(gt_line)
+
     finally:
         print("Disable Synchronous Mode")
         settings = world.get_settings()
@@ -252,6 +345,7 @@ def run_simulation(Town, SL, scenario, nr_vans):
                 van.destroy()
 
         print("Actors destroyed")
+        gt_log.close()
 
 
 def choose_correct_waypoint(waypoint_list, hero_route, current_index):

@@ -1,5 +1,5 @@
 from class_ScenarioLocationPerformance import *
-from main_InspectData import DirName, InspectJsonFileInDir, FilterOutliersFromOrb
+from main_InspectData import DirName, InspectJsonFileInDir
 from matplotlib import pyplot as plt
 import numpy as np
 import pdb
@@ -10,9 +10,10 @@ def main():
     base_dir = "/home/sietse/results_carla0.9/stuckbehindvan/20fps/"
     dynamic_scenarios = (20, 15, 10)
     Towns = (1,2)
+    mode = "MC"
 
     # for Town in Towns:
-    Town = 3
+    Town = 1
     if Town == 1:
         starting_locations = (0, 27, 58)
     elif Town == 2:
@@ -43,12 +44,12 @@ def main():
             dir_name_stat = DirName(Town, SL, "static")
             dir_name_dyn = DirName(Town, SL, "dynamic", ds)
 
-            orb_static, gt = InspectJsonFileInDir(Town, SL, base_dir, dir_name_stat)
-            orb_dynamic, gt = InspectJsonFileInDir(Town, SL, base_dir, dir_name_dyn)
+            orb_static, gt = InspectJsonFileInDir(Town, SL, base_dir, dir_name_stat, mode)
+            orb_dynamic, gt = InspectJsonFileInDir(Town, SL, base_dir, dir_name_dyn, mode)
             Perf = ScenarioLocationPerformance(ds, Town, SL, orb_static, orb_dynamic, gt)
             if ds == 20:
-                x.extend(["T" + str(Perf.location["Town"]) + "Nr" + str(index+1) + "\n" +" Static",
-                          "T" + str(Perf.location["Town"]) + "Nr" + str(index+1) +  "\n"+ " Dist:" + str(Perf.scenario["Distance"])])
+                x.extend(["T" + str(Perf.location["Town"]) + "Nr" + str(index+1) + "\n" + " Static",
+                          "T" + str(Perf.location["Town"]) + "Nr" + str(index+1) + "\n" + " Dist:" + str(Perf.scenario["Distance"])])
                 avg_trans.extend([Perf.rmse_static_avg[0], Perf.rmse_dynamic_avg[0]])
                 std_trans.extend([Perf.rmse_static_std[0], Perf.rmse_dynamic_std[0]])
                 avg_rot.extend([Perf.rmse_static_avg[1], Perf.rmse_dynamic_avg[1]])
@@ -68,13 +69,13 @@ def main():
         plt.subplot(3, 1, 1)
         # plt.grid(True)
         label_location = "T" + str(Perf.location["Town"]) + "Nr" + str(index+1)
-        plt.errorbar(ind[i:i+(len(dynamic_scenarios)+1)], np.array(avg_trans), np.array(std_trans), label=label_location)
+        plt.errorbar(ind[i:i+(len(dynamic_scenarios)+1)], np.array(avg_trans), np.array(std_trans), color='green', label=label_location)
         plt.subplots_adjust(hspace=0.5)
         plt.legend()
 
         plt.subplot(3, 1, 2)
         label_location = "T" + str(Perf.location["Town"]) + "Nr" + str(index + 1)
-        plt.errorbar(ind[i:i + (len(dynamic_scenarios) + 1)], np.array(avg_rot), np.array(std_rot), label=label_location)
+        plt.errorbar(ind[i:i + (len(dynamic_scenarios) + 1)], np.array(avg_rot), np.array(std_rot), color='green', label=label_location)
         plt.legend()
 
         width = 0.35
@@ -84,7 +85,7 @@ def main():
         i = i + (len(dynamic_scenarios)+1)
     plt.subplot(3, 1, 1)
     plt.xticks(ind, x)
-    if Town == 1:
+    if mode == "SLAM" and Town == 1:
         plt.ylim(top=0.060)
     plt.xlim(right=N)
     plt.title("Translational component root mean square error of the relative pose error")
@@ -92,7 +93,7 @@ def main():
 
     plt.subplot(3, 1, 2)
     plt.xticks(ind, x)
-    if Town == 1:
+    if mode == "SLAM" and Town == 1:
         plt.ylim(top=0.040)
     plt.xlim(right=N)
     plt.title("Rotational component root mean square error relative pose error")

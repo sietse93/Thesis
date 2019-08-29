@@ -2,15 +2,17 @@ import os
 from ros import rosbag
 import roslib
 import rospy
+import numpy as np
+import time
+import pdb
 from sensor_msgs.msg import Image
 roslib.load_manifest('sensor_msgs')
 import cv2
 from cv_bridge import CvBridge
-import numpy as np
-import pdb
+
 # sys.path.append('/home/sietse/carla/PythonAPI')
 
-def Stereo2Rosbag(dir, file_sys):
+def Stereo2Rosbag(dir, file_sys, fps):
     '''Creates the actual bag file by successively adding images'''
     all_imgs, left_imgs, right_imgs = GetFilesFromDir(dir)
     if len(all_imgs) <= 0:
@@ -24,12 +26,12 @@ def Stereo2Rosbag(dir, file_sys):
     # if no images are missing create Stereo Rosbag
     if len(missing_im_left) == 0 and len(missing_im_right) == 0:
         print("No missing images")
-        # Remove first image, so spawning of vehicle is not registered 
+        # Remove first image, so spawning of vehicle is not registered
         left_imgs.pop(0)
         right_imgs.pop(0)
         if len(left_imgs) > 0 and len(right_imgs) > 0:
             # create bagfile with stereo camera image pairs
-            CreateStereoBag(dir, file_sys, left_imgs, right_imgs)
+            CreateStereoBag(dir, file_sys, left_imgs, right_imgs, fps)
         else:
             print("No stereo images")
     else:
@@ -39,7 +41,7 @@ def Stereo2Rosbag(dir, file_sys):
                                                len(missing_im_right), [im for im in missing_im_right]))
 
 
-def CreateStereoBag(dir, file_sys, left_imgs, right_imgs):
+def CreateStereoBag(dir, file_sys, left_imgs, right_imgs, fps):
     '''Creates a bag file containing stereo image pairs '''
 
     bagname = dir + file_sys + ".bag"
@@ -48,18 +50,19 @@ def CreateStereoBag(dir, file_sys, left_imgs, right_imgs):
     bridge = CvBridge()
 
     try:
+        print("writing rosbag")
         for i in range(len(left_imgs)):
-            print("Adding %s" % left_imgs[i])
+            # print("Adding %s" % left_imgs[i])
             img_cv_left = cv2.imread(left_imgs[i])
             Img_left = bridge.cv2_to_imgmsg(img_cv_left, encoding="bgr8")
 
-            print("Adding %s" % right_imgs[i])
+            # print("Adding %s" % right_imgs[i])
             img_cv_right = cv2.imread(right_imgs[i])
             Img_right = bridge.cv2_to_imgmsg(img_cv_right, encoding="bgr8")
 
             # TO DO: IF IMAGE IS SKIPPED THAN THE HEADER TIME SHOULD BE DIFFERENT
             # fps=10
-            t = t + 0.1
+            t = t + 1/fps
 
             Stamp = rospy.rostime.Time.from_sec(t)
 
@@ -142,20 +145,46 @@ def SortFiles(file_list):
 
 
 def main():
-    Town=3
-    SL=97
-    scenario = "static"
-
-    home_user = os.path.expanduser('~')
-    if scenario == "dynamic":
-        file_sys = "/T{}_SL{}_{}{}".format(Town, SL, scenario[0], 1)
+    # Towns = (1, 2, 3)
+    Town = 1
+    fps = 20.0
+    nr_of_vans = 10
+    # for Town in Towns:
+    if Town == 1:
+        starting_locations = (27, 0, 58)
+    elif Town == 2:
+        starting_locations = (18, 37, 78)
+    elif Town == 3:
+        # starting_locations = (75, 97, 127, 132)
+        starting_locations = (127, 132)
     else:
-        file_sys = "/T{}_SL{}_{}".format(Town, SL, scenario[0])
-
-    # A directory per scenario
-    dir = home_user + "/results_carla0.9" + file_sys
-
-    Stereo2Rosbag(dir, file_sys)
+        print("Town does not exist")
+        return
+    starting_locations = [27]
+    # scenarios = ("static", "dynamic")
+    scenario = "static"
+    dynamic_scenarios = (20, 15, 10)
+    # scenario = "static"
+    home_user = os.path.expanduser('~')
+    base_dir = home_user + "/results_carla0.9/stuckbehindvan/test"
+    for SL in starting_locations:
+        # for scenario in scenarios:
+        if scenario == "dynamic":
+            start = time.time()
+            file_sys = "/T{}_SL{}_{}{}".format(Town, SL, scenario[0], nr_of_vans)
+            print("converting {}".format(file_sys))
+            dir = base_dir + file_sys
+            Stereo2Rosbag(dir, file_sys, fps)
+            end = time.time()
+            print("Converting time is {}".format(end-start))
+        else:
+            start = time.time()
+            file_sys = "/T{}_SL{}_{}".format(Town, SL, scenario[0])
+            print("converting {}".format(file_sys))
+            dir = base_dir + file_sys
+            Stereo2Rosbag(dir, file_sys, fps)
+            end = time.time()
+            print("Converting time is {}".format(end - start))
 
 if __name__ == "__main__":
     main()

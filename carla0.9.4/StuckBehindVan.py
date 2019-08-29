@@ -71,7 +71,6 @@ def main(args):
     else:
         print("Scenario simulation will be {}".format(scenario))
 
-
     # input values
     fps = 10.0
     speed = 15.0  # in km/h

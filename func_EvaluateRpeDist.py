@@ -96,4 +96,11 @@ def evaluate_RPE_dist(gt, Slam, eva_dist=100.0):
 
 
 def calc_rmse(error_list):
-    return np.sqrt(np.sum(np.array(error_list)**2)/len(error_list))
+    return np.sqrt(np.sum(np.array(error_list)**2)/float(len(error_list)))
+
+# def InspectRpeDist(SLAM, gt):
+#     for Slam in SLAM:
+#          time_used, trans_errs, rot_errs = evaluate_RPE_dist(gt, Slam, 100)
+#          rpe_rmse_dist_trans = calc_rmse(trans_errs)
+
+

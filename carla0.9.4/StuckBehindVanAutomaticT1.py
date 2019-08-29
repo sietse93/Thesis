@@ -67,9 +67,9 @@ def should_quit():
 
 def main():
     Town = 1
-    # Starting_locations = [58, 27, 0][37, 78, 18]
+    # Starting_locations = [58, 27, 0]
     scenarios = ["static", "dynamic"]
-    distances2van = [20, 15, 10]
+    distances2van = [20, 15]
     # distances2van = [20, 15, 10]
     # for SL in Starting_locations:
     SL = 27

@@ -150,8 +150,8 @@ class ScenarioLocationPerformance:
         """Calculate the average and variance of starting location"""
 
         if self.ratio_filtered_static == 1.0:
-            self.rmse_static_avg = None
-            self.rmse_static_std = None
+            self.rmse_static_avg = (np.nan, np.nan)
+            self.rmse_static_std = (np.nan, np.nan)
         else:
             rmse_trans_static = np.array([rmse[0] for rmse in self.rmse_static])
             rmse_rot_static = np.array([rmse[1] for rmse in self.rmse_static])
@@ -159,13 +159,14 @@ class ScenarioLocationPerformance:
             self.rmse_static_std = (np.std(rmse_trans_static), np.std(rmse_rot_static))
 
         if self.ratio_filtered_dynamic == 1.0:
-            self.rmse_dynamic_avg = None
-            self.rmse_dynamic_std = None
+            self.rmse_dynamic_avg = (np.nan, np.nan)
+            self.rmse_dynamic_std = (np.nan, np.nan)
         else:
             rmse_trans_dynamic = np.array([rmse[0] for rmse in self.rmse_dynamic])
             rmse_rot_dynamic = np.array([rmse[1] for rmse in self.rmse_dynamic])
             self.rmse_dynamic_avg = (np.mean(rmse_trans_dynamic), np.mean(rmse_rot_dynamic))
             self.rmse_dynamic_std = (np.std(rmse_trans_dynamic), np.std(rmse_rot_dynamic))
+
 
 
     def SaveRpeData(self, gt):
